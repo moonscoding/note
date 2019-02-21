@@ -1,3 +1,5 @@
+
+
 # Note
 
 
@@ -10,7 +12,37 @@
 
 
 
-> 작성방법
+> 정리내용
+
+- [ ] JAVA
+  - [ ] primitive
+  - [ ] native
+  - [ ] oop
+  - [x] collection
+  - [x] stream
+  - [ ] socket
+
+- [ ] SPRING
+  - [x] DI
+  - [ ] AOP
+  - [ ] data
+  - [ ] MVC
+  - [ ] security
+  - [ ] boot
+  - [ ] batch
+  - [ ] cloud
+
+- [ ] MYSQL
+
+- [ ] LINUX
+
+  - [ ] DOCKER
+
+- [ ] ElK
+
+  
+
+> 관리방법
 
 Markdown으로 Typora 에디터를 통해 작성하고 있습니다. ( https://typora.io/ )
 
@@ -20,6 +52,14 @@ Markdown으로 Typora 에디터를 통해 작성하고 있습니다. ( https://t
 
 - 구글계정 : jm921106
 - 깃허브주소 : https://github.com/moonscoding/note
+
+
+
+> 테마설정
+
+Typora는 다양한 테마를 지원합니다.
+
+- Typora 테마 : https://theme.typora.io/
 
 
 
@@ -39,12 +79,17 @@ Typora는 clipboard 이미지를 불러올 수 있도록 지원합니다.
 
 
 
-> 정리내용
+> 검색관리방법
 
-- JAVA
-- SPRING
-- ~~MYSQL~~
-- ~~LINUX~~
-- ~~ElK~~
-- ~~DOCKER~~
+Typora는 단어단위로 강력한 검색을 지원합니다.
+
+그렇기 때문에 검색에 편리하도록 문서 상단에 태그를 남겨줍니다. 
+
+(Markdown에서 #은 H1 태그를 의미하기 때문에 역슬래시를 사용하여 태그를 나타냅니다.)
+
+```
+\#TAG_A \#TAG_B
+
+--- 
+```
 
