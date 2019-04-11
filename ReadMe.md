@@ -40,17 +40,24 @@
 
 - [ ] ElK
 
+- [ ] MSA
+
+- [ ] network
+
   
 
 > 관리방법
 
-Markdown으로 Typora 에디터를 통해 작성하고 있습니다. ( https://typora.io/ )
+Markdown으로 Typora 에디터를 통해 작성하고 있습니다.  
+
+- Typora주소 : https://typora.io/ 
 
 평소 작업시에는 구글드라이브를 통해 동기화하며, 
 
 공유가 필요할 땐 깃허브를 통해 배포하고 있습니다.
 
-- 구글계정 : jm921106
+- 구글드라이브계정 : jm921106
+
 - 깃허브주소 : https://github.com/moonscoding/note
 
 

@@ -20,13 +20,13 @@
 
 
 
-> #자바기반
+> 자바기반
 
 ```java
 ...
 ```
 
-> #Annotation기반
+> Annotation기반
 
 ```java
 @Configuration
@@ -36,7 +36,7 @@ public class AppConfig {
 }
 ```
 
-> #XML기반
+> XML기반
 
 ```xml
 <beans>
@@ -98,13 +98,13 @@ public class AppConfig {
 
 ### #ASSIGNABLE_TYPE
 
-> #인터페이스기반
+> 인터페이스기반
 
 ```java
 public interface DemainService{}
 ```
 
-> #자바기반
+> 자바기반
 
 ```java
 @ComponentScan(
@@ -113,7 +113,7 @@ public interface DemainService{}
 )
 ```
 
-> #XML기반
+> XML기반
 
 ```xml
 <context:component-scan base-package="com.example.demo">
@@ -125,7 +125,7 @@ public interface DemainService{}
 
 ### #REGEX
 
-> #자바기반
+> 자바기반
 
 ```java
 @ComponentScan(
@@ -134,7 +134,7 @@ public interface DemainService{}
 )
 ```
 
-> #XML기반
+> XML기반
 
 ```xml
 <context:component-scan base-package="com.example.demo">
@@ -150,7 +150,7 @@ public interface DemainService{}
 - 애너테이션이 붙은 스캔대상을 무시하고 필터적용대상만 조회하고 싶을 때
 - default : true
 
-> #자바기반
+> 자바기반
 
 ```java
 @ComponentScan(
@@ -160,7 +160,7 @@ public interface DemainService{}
 )
 ```
 
-> #XML기반
+> XML기반
 
 ```xml
 <context:component-scan base-package="com.example.demo" use-default-filters="false">
@@ -172,7 +172,7 @@ public interface DemainService{}
 
 ### #excludeFilters
 
-> #자바기반
+> 자바기반
 
 ```java
 @ComponentScan(
@@ -183,7 +183,7 @@ public interface DemainService{}
 )
 ```
 
-> #XML기반
+> XML기반
 
 ```xml
 context:component-scan base-package="com.example.demo" use-default-filters="false">
