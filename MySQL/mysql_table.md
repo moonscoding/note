@@ -11,7 +11,7 @@
 - SMALLINT[(M)] [UNSIGNED] [ZEROFILL] - 작은 정수
   - size : 2바이트( -32768~32767 )
 - MEDIUMINT[(M)] [UNSIGNED] [ZEROFILL] - 중간 정수
-  - size : 3 byte
+  - size : 3 byte ( -8388608~8388607 )
 - INT[(M)] [UNSIGNED] [ZEROFILL] - 정수
   - size : 4 byte
 - BIGINT[(M)] [UNSIGNED] [ZEROFILL] - 큰 정수

@@ -1,4 +1,4 @@
-\#spring #JPA
+\@#spring #JPA
 
 ## ORM & JPA
 
@@ -69,7 +69,7 @@ public class Room implements Serializable {
   - 기본키가 복합키인 경우
 - `@GeneratedValeu`
   - 기본키 생성을 JPA에게 위임
-  - strategy 속성에 GeneationType을 지정해서 생성방법지점
+  - strategy 속성에 `GeneationType`을 지정해서 생성방법지점
     - 기본값은 `GeneationType.AUTO`
     - DB의 최적키 생성방법이 자동으로 선택
 - `@Column`
@@ -261,7 +261,9 @@ private List<Equipment> equipment;
 ```
 
 - SQL을 실행해서 데이터를 가져오는 과정을 JPA에서 패치
-- @OneToOne, @ManyToOne은 `Eager 패치`를 사용, 그 밖에는 `Lazy 패치`를 사용
+- `@OneToOne, @ManyToOne`은 `Eager 패치`를 사용, 그 밖에는 `Lazy 패치`를 사용
+
+
 
 ### #JPQL
 
@@ -303,3 +305,264 @@ public List<Room> getRoomsByName(String roomName) {
 - SQL로 대체하면 테이블 이름을 사용하게 되는데 JPQL에서 이것들을 Entity명이나 그것의 프로퍼티명을 대체
 - EntityManager에서 제공되는 API를 사용해서 문자열의 JPQL의 TypedQuery로 컴파일
 - JPQL에 설정한 바인드 `변수(':변수명'형식)`에 바인드 값을 설정
+
+
+
+### #CRUD
+
+
+
+#### #JPA 활용
+
+```java
+@Service
+public class RoomServiceImpl implements RoomService {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Transactional(readOnly = true)
+    public Room getRoom(Integer id) {
+        Room room = entityManager.find(Room.class, id);
+        if(room == null) {
+            // 검색대상이 없을때
+        }
+        return room;
+    }
+
+    @Transactional
+    public Room createRoom(String roomName, Integer capacity) {
+        Room room = new Room();
+        room.setRoomName(roomName);
+        room.setCapacity(capacity);
+        entityManager.persist(room);
+        return room;
+    }
+
+    @Transactional
+    public Room updateRoomName(Integer id, String roomName) {
+        Room room = getRoom(id);
+        room.setRoomName(roomName);
+        return room;
+    }
+
+    @Transactional
+    public void deleteRoom(Integer id) {
+        Room room = getRoom(id);
+        entityManager.remove(room);
+    }
+}
+```
+
+
+
+#### #JPQL 활용
+
+> Read ( .getResultList() )
+
+```java
+@Service
+public class RoomServiceImpl implements RoomService {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Transactional(readOnly = true)
+    public List<Room> getRoomsByFetch(String roomName) {
+        String jpql = "SELECT DISTINCT r FROM Room r " +
+                "LEFT JOIN FETCH r.equipments " +
+                "WHERE r.roomName = :roomName";
+        TypedQuery<Room> query = entityManager.createQuery(jpql, Room.class);
+        query.setParameter("roomName", roomName);
+        return query.getResultList();
+    }
+}
+```
+
+> Update ( .executeUpdate() ) 
+
+```java
+@Service
+public class RoomServiceImpl implements RoomService {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Transactional
+    public Integer updateCapacityAll(Integer capacity) {
+        String jpql = "UPDATE Room r SET r.capacity = :capacity";
+        Query query = entityManager.createQuery(jpql);
+        query.setParameter("capacity", capacity);
+        return query.executeUpdate();
+    }
+}
+```
+
+
+
+### #베타제어
+
+- <언제 왜 사용하는지>
+  - 웹어플리케이션은 동시에 여러 트랜잭션이 실행되는 것이 일반적이기 때문에 갱신처리에 배타제어를 고려해야 합니다.
+  - 엔티티를 잠금처리하면 다른 곳에서 데이터를 제어할 수 없습니다.
+
+- <종류>
+  - 낙관적 잠금 (optimistic lock)
+  - 비관적 잠금 (pessimistic locl)
+
+#### #낙관적잠금
+
+- `@Version` 
+  - Entity가 서로 구분되도록 반드시 버저닝 처리
+  - 사용가능타입
+    - Integer
+    - Timestamp
+  - 버저닝을 위해 JPA 내부에서 이 프로퍼티가 갱신되기 때문에 애플리케이션이 직접 갱신 금지
+
+```java
+@Entity
+@Table(name="room")
+public class Room implements Serializable {
+
+    @Version
+    @Column(name = "version")
+    private Integer version;
+
+}
+```
+
+- 낙관적 잠금 활성화
+  - `EntitiyManager.lock()` 외 `EntityManager.find()`인수에 `LockModeType`을 지정해서 락을 활성화가능
+  - 쿼리에 대해 락을 활성화하는 경우 `TypedQuery.LockMode()`사용
+  - 활성화하는 쿼리는 데이터를 조회하는 쿼리로 제한
+  - <다른 트랜잭션에 의해 같은 행에 갱신이 완료된 경우>
+    - DB에 갱신정보를 반영하려고 한 시점에서 예상한 버전과 다른 버전이 감지
+    - `OptimisticLockException `발생
+  - <트랜잭션이 종료될 때, 낙관적 잠금에 실패한 경우>
+    -  `OptimisticLockException` 래핑한 `RollbackException`발생
+
+```java
+@Service
+public class RoomServiceImpl implements RoomService {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Transactional
+    public void updateRoomWithOptimisticLock(Integer id, String roomName, Integer capacity) {
+        Room room = entityManager.find(Room.class, id);
+        entityManager.lock(room, LockModeType.OPTIMISTIC);
+        // 갱신처리 (생략)
+        // 낙관적 잠금이 실패시에 트랜잭션이 종료되는 시점에 OptimisticLockException 발생
+    }
+}
+```
+
+#### #비관적잠금
+
+- 비관적 잠금 활성화
+  - `EntityManager.find()`나 `EntityManager.createQuery()` 비관적 잠금을 확보
+  - <비관적 잠금 처리에 실패한 경우>
+    - `PessimisticLockException` 발생
+  - <비관적 잠금 처리에서 타임아웃이 발생한 경우>
+    - `LockTimeoutException` 발생
+    - JPA는 예외에 한해 트랙잭션 롤백처리를 하지 않기 때문에 
+      예외를 포착한 후에 트랜잭션을 계속 이어나감
+    - 비관적 잠금은 낙관적 잠금과 달리 Entity 버저닝은 불필요하지만, 버저닝하는 옵션도 제공
+
+```java
+@Service
+public class RoomServiceImpl implements RoomService {
+
+    @PersistenceContext
+    EntityManager entityManager;
+
+    @Transactional
+    public void updateRoomWithPessimisticLock(Integer id, String roomName, Integer capacity) {
+        Room room = entityManager.find(Room.class, id);
+        try {
+            entityManager.lock(room, LockModeType.PESSIMISTIC_READ);
+        } catch (PessimisticLockException e) {
+            // 락을 거는 과정에서 실패한 경우
+            // ..
+        } catch (LockTimeoutException e) {
+            // 락을 거는 과정에서 시간이 초과한 경우 ( 트랜잭션 자체는 롤백되지 않음 )
+            // ..
+        }
+        // 갱신처리 (생략)
+    }
+}
+```
+
+- 비관적 잠금 종류
+  - 공유 잠금`LockModeType.PESSIMITIC_READ`
+    - 읽기 잠금을 취득하고 다른 트랜잭션에서 변경하거나 삭제하는 것을 방지
+    - 잠금된 엔티티가 실제로 변경삭제될때까지는 다른 트랜잭션이 공유잠금을 취득하거나 읽음
+  - 베타적 잠금 `LockModeType.PESSIMITIC_WRITE`
+    - 쓰기 잠금을 취득하고 다른 트랜잭션에서 읽거나 변경, 삭제하는 것을 방지
+    - 다른 트랜잭션은 공유 잠금, 베타적 잠금을 취득할 수 없음
+  - 베타적 잠금 (버전갱신) `LockModeType.PESSIMITIC_FORCE_INCREMENT`
+    - `LockModeType.PESSIMITIC_WRIT` 와 마찬가지로 쓰기 잠금을 취득
+    - 동시에 Entity 버저닝 프로퍼티가 증가
+
+
+
+### #Inheritance
+
+- 관계매핑의 3가지 방법
+  - `조인전략`  : 각각의 테이블로 만들어 조회할 때 조인을 사용
+  - `단일 테이블 전략` : 테이블을 하나만 사용해서 통합
+  - `구현클래스마다 테이블 전략` : 서브타입마다 하나의 테이블을 생성
+
+#### #조인전략
+
+- `@Inheritance(strategy = InheritanceType.JOINED)`
+  - 상속매핑은 부모 클래스에 Inheritance를 사용
+  - 매핑전략은 조인전략임으로 InheritanceType.JOINED를 사용
+- `@DiscriminatorColumn(name = "DTYPE")`
+  - 부모클래스에 구분컬럼
+  - 이 컬럼으로 저장된 자식테이블을 구분
+  - 기본값은 `DTYPE`
+- `@DiscriminatorValue("A")`
+  - Entity 저장시에 구분칼럼에 입력할 값을 저장
+
+```java
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "DTYPE")
+@Data
+public abstract class Item {
+  @Id
+  @GeneratedValue
+  private Long id;
+  private String name;
+  private int price;
+}
+
+@Entity
+@DiscriminatorValue("A")
+@Data
+public class Album extends Item {
+  private String artist;
+}
+
+@Entity
+@Data
+@DiscriminatorValue("B")
+@PrimaryKeyJoinColumn(name = "BOOK_ID")
+public class Book extends Item {
+  private String author;
+  private String isbn;
+}
+
+@Entity
+@DiscriminatorValue("M")
+@Data
+public class Movie extends Item {
+  private String director;
+  private String actor;
+}
+```
+
+#### #단일테이블전략
+
