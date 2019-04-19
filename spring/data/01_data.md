@@ -103,3 +103,99 @@ public class DataSourceEmbeddedConfig {
 }
 ```
 
+
+### #Exception
+
+#### #DataAccessException
+
+- 스프링의 데이터접근 예외처리는 `DataAccessException`를 부모 클래스로 하는 계층 구조
+
+
+
+![1551939215412](1551939215412.png)
+
+
+
+> 비검사예외
+
+- `DataAccessException`은 `RuntimeException`의 자식클래스로 구현
+- 비검사예외처리가 가능
+
+
+
+#### #DataIntegrityViolationException
+
+> 구현을 은폐한 데이터 접근 예외
+
+- 데이터 접근 방법의 차이와 데이터베이스의 의 차이로 발생하는 데이터 접근 예외는 모두 각자 개별적으로 정의한 예외를 반환
+- `DataIntegrityViolationException`은 일관된 예외처리가 가능
+
+
+
+#### #예외처리
+
+- 데이터접근예외는 비검사예외로 구현되어 예외처리가 필요하다면 예외가 발생할 곳에 `try-catch`문을 사용
+
+```java
+public Room getRoomForUpdate(String roomId) {
+    Room room = null;
+    try {
+        room = roomDao.getRoomForUpdate(roomId);
+    } catch(DataRetrievalFailureException e) {
+        throw new NotFoundRoomIdException("roomId=" + roomId, e);
+    }
+    return room;
+}
+```
+
+
+
+#### #변환규칙커스텀
+
+- 데이터베이스 오류 코드 및 데이터 접근 예외에 관련된 내용은 `spring-jdbc-xxx.jar`에 포함된 `sql-error-codes.xml`을 사용
+- 클래스패스 바로 아래 `sql-error-codes.xml`을 두고 그 내용을 재정의하면 기본 설정된 내용을 커스텀 가능
+
+> H2 오류코드정의 (org/springframework/jdbc/support/sql-error-codes.xml)
+
+```xml
+<bean id="H2" class="org.springframework.jdbc.support.SQLErrorCodes">
+    <property name="badSqlGrammarCodes">
+        <value>42000,42001,42101,42102,42111,42112,42121,42122,42132</value>
+    </property>
+    <property name="duplicateKeyCodes">
+        <value>23001,23505</value>
+    </property>
+    <property name="dataIntegrityViolationCodes">
+        <value>22001,22003,22012,22018,22025,23000,23002,23003,23502,23503,23506,23507,23513</value>
+    </property>
+    <property name="dataAccessResourceFailureCodes">
+        <value>90046,90100,90117,90121,90126</value>
+    </property>
+    <property name="cannotAcquireLockCodes">
+        <value>50200</value>
+    </property>
+</bean>
+```
+
+> 커스텀 오류코드정의 (클래스패스 바로 아래)
+
+```xml
+<bean id="H2" class="org.springframework.jdbc.support.SQLErrorCodes">
+    <property name="badSqlGrammarCodes">
+        <value>42000,42001,42101,42102,42111,42112,42121,42122,42132</value>
+    </property>
+    <!--<property name="duplicateKeyCodes">
+        <value>23001,23505</value>
+    </property>-->
+    <property name="dataIntegrityViolationCodes">
+        <value>23001,23505,22001,22003,22012,22018,22025,23000,23002,23003,23502,23503,23506,23507,23513</value>
+    </property>
+    <property name="dataAccessResourceFailureCodes">
+        <value>90046,90100,90117,90121,90126</value>
+    </property>
+    <property name="cannotAcquireLockCodes">
+        <value>50200</value>
+    </property>
+</bean>
+```
+
