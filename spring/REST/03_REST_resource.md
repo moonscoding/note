@@ -21,82 +21,27 @@
 ```
 
 > 변환된 Resource
+>
+> - JSON과 연동할 POJO 클래스를 만든다. 클래스명에 특별한 제한은 없으나 접미사 `Resource`로 명명하는 것을추천
+> - JSON 필드명과 같은 프로퍼티명을 만든다.
+>   - 만약, 이름이 다를경우 `@JsonProperty` 를 이용해서 이름을 매핑합니다. 
+> - 여러개를 다뤄야할때는 `List`를 사용
+> - 프로퍼티 타입에 적절한 타입을 지
 
 ```java
 public class BookResource implements Serializable {
-
     private static final long serialVersionUID = -9115030674240690591L;
-
-    // == [주의] Json 필드명 == 자바빈즈 프로퍼티명 ==
     private String bookId;
     private String name;
     private List<String> authors;
-    @DateTimeFormat(pattern="yyyy-MM-dd") // ISO 8061
+    @DateTimeFormat(pattern="yyyy-MM-dd")
     private LocalDate publishedDate;
     private BookPublisher publisher;
 
-    public String getBookId() {
-        return bookId;
-    }
-
-    public void setBookId(String bookId) {
-        this.bookId = bookId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public LocalDate getPublishedDate() {
-        return publishedDate;
-    }
-
-    public void setPublishedDate(LocalDate publishedDate) {
-        this.publishedDate = publishedDate;
-    }
-
-    public List<String> getAuthors() {
-        return authors;
-    }
-
-    public void setAuthors(List<String> authors) {
-        this.authors = authors;
-    }
-
-    public BookPublisher getPublisher() {
-        return publisher;
-    }
-
-    public void setPublisher(BookPublisher publisher) {
-        this.publisher = publisher;
-    }
-
     public static class BookPublisher implements Serializable {
-
         private static final long serialVersionUID = -8119817744873562082L;
-
         private String name;
         private String tel;
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public String getTel() {
-            return tel;
-        }
-
-        public void setTel(String tel) {
-            this.tel = tel;
-        }
     }
 }
 ```
