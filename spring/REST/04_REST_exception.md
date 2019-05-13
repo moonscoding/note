@@ -142,7 +142,7 @@ public ResponseEntity<Object> handleBookNotFountException (
 > 시스템 예외처리
 
 - 시스템예외처리는 오류 메시지에 설정에 주의
-  오류응답메시지에 실제 발생한 예외 메시지 대신 오류원인의 특징을 알 수 없는 문구를 사용해야 합니다.
+  - 오류응답메시지에 실제 발생한 예외 메시지 대신 오류원인의 특징을 알 수 없는 문구를 사용해야 합니다.
 - 기본 메시지에 고정문구를 사용
 - 오류 정보를 생성하는 메서드에 기본 메세지를 인수로 받도록 설정
 
@@ -167,10 +167,14 @@ private ApiError createApiError(Exception ex, String defaultMessage) {
 ### #입력값검사_예외처리
 
 - 입력값 검사 오류가 발생
-  - org.springframework.web.bind.MethodArgumentNotValidException
-  - org.springframework.validation.BindException
-- Response EntityExceptionHandler
-  - @ExceptionHandler 메서드가 오류를 처리
+  - org.springframework.web.bind.`MethodArgumentNotValidException`
+  - org.springframework.validation.`BindException`
+- Response - EntityExceptionHandler
+  - `@ExceptionHandler` 메서드가 오류를 처리
+
+
+
+#### #적절한오류처리
 
 > 적절한 오류메시지로 변환
 
@@ -193,7 +197,17 @@ private final Map<Class<? extends Exception>, String> messageMappings =
 }
 ```
 
+
+
+#### #상세한오류처리
+
 > 상세오류정보의 출력
+
+- 상세 오류 정보를 담을 클래스
+  - ApiError 클래스의 정적 내부 클래스
+- 상세 오류 정보를 리스트로 담을 프로퍼티
+  - `@JsonInclude`
+    - 상세 오류 정보가 없을때 details 필드가 JSON에 출력되지 않게 처리
 
 ```java
 public class Detail implements Serializable {
@@ -201,8 +215,6 @@ public class Detail implements Serializable {
     private static final long serialVersionUID = -8119817744873562082L;
     private final String target;
     private final String message;
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    private final List<Detail> details = new ArrayList<>();
 
     private Detail(String target, String message) {
         this.target = target;
@@ -216,6 +228,9 @@ public class Detail implements Serializable {
     public String getMessage() {
         return message;
     }
+    
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private final List<Detail> details = new ArrayList<>();
 
     public List<Detail> getDetails() {
         return details;
@@ -227,13 +242,14 @@ public class Detail implements Serializable {
 }
 ```
 
-- 상세 오류 정보를 담을 클래스
-  - ApiError 클래스의 정적 내부 클래스
-- 상세 오류 정보를 리스트로 담을 프로퍼티
-  - @JsonInclude
-    - 상세 오류 정보가 없을때 details 필드가 JSON에 출력되지 않게 처리
-
 > 상세한 오류 정보를 추가하는 구현
+
+- `MessageSource`
+  - 오류 메시지를 가져오기 위한 컴포넌트를 DI
+- `ResponseEntityExceptionHandler`의 `handleMethodArgumentNotValid()` 재정의
+  - `BindException` 처리시엔 `handleBindException()` 재정의
+- 객체에 연결된 오류객체(ObjectError)를 상세 오류정보에 추가
+- 필드에 연결된 오류객체(FieldError)를 상세 오류정보에 추가
 
 ```java
 
@@ -259,13 +275,6 @@ public String getMessage(MessageSourceResolvable resolvable, WebRequest request)
 }
 ```
 
-- MessageSource
-  - 오류 메시지를 가져오기 위한 컴포넌트를 DI
-- ResponseEntityExceptionHandler의 handleMethodArgumentNotValid() 재정의
-  - BindException 처리시엔 handleBindException() 재정의
-- 객체에 연결된 오류객체(ObjectError)를 상세 오류정보에 추가
-- 필드에 연결된 오류객체(FieldError)를 상세 오류정보에 추가
-
 > 상세오류를 출력한 오류응답
 
 ```json
@@ -281,10 +290,17 @@ public String getMessage(MessageSourceResolvable resolvable, WebRequest request)
 }
 ```
 
-### 서블릿컨테이너에 전달된 오류의 응답
+### #서블릿컨테이너_오류응답
 
 - 서블릿컨테이너로 전달된 오류는 서블릿컨테이너 오류페이지기능(web.xml의 <error-page> 요소)를 이용해서 처리
-- 오류 정보를 담은 클래스를 HttpMessageConverter를 사용해 JSON으로 변환하는 것도 가능
+- 오류 정보를 담은 클래스를 `HttpMessageConverter`를 사용해 JSON으로 변환하는 것도 가능
+
+> 오류응답용 컨트롤러
+
+- 오류응답용 오류정보를 반환할 핸들러 메서드 추가
+- 요청 스코프에 저장된 예외객체와 HTTP 상태코드를 통해 오류정보에 설정할 메시지를 얻어옴
+  - 예외 객체에 설정된 메시지는 애플리케이션의 내부정보를 포함하고 있을 가능성이 있어 부적절합니다.
+  - 예외 객체를 참조해서 오류 메시지를 가져오는 부분은 MVC 예외 핸들러와 공유합니다.
 
 ```java
 @RestController
@@ -294,10 +310,8 @@ public class ApiErrorPageController {
     public ApiError handleError(HttpServletRequest request) {
 
         String message;
-        Exception ex = (Exception) request
-                .getAttribute(RequestDispatcher.ERROR_EXCEPTION);
-        Integer statusCode = (Integer) request
-                .getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+        Exception ex = (Exception) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+        Integer statusCode = (Integer) request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
 
         if(ex != null) {
             message = ex.getMessage();
@@ -318,13 +332,9 @@ public class ApiErrorPageController {
 }
 ```
 
-- 오류응답용 오류정보를 반환할 핸들러 메서드 추가
-- 요청 스코프에 저장된 예외객체와 HTTP 상태코드를 통해 오류정보에 설정할 메시지르 얻어옴
-  - 예외 객체에 설정된 메시지는 애플리케이션의 내부정보를 포함하고 있을 가능성이 있어 부적절
-  - 예외 객체를 참조해서 오류 메시지를 가져오는 부분은 MVC 예외 핸들러와 공유
-- 오류정보를 반환
-
 > 오류 처리 정의 (web.xml)
+
+- 3.1 이상일 경우 서블릿컨테이너의 기본 오류 페이지를 커스텀 가능
 
 ```xml
 <!-- 예외 클래스 지정 및 오류처리정의 -->
@@ -339,8 +349,6 @@ public class ApiErrorPageController {
     <location>/error</location>
 </error-page>
 ```
-
-- 3.1 이상일 경우 서블릿컨테이너의 기본 오류 페이지를 커스텀 가능
 
 > 기본오류페이지를 변경하는 예 (web.xml)
 

@@ -162,12 +162,23 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
 > 페이지처리 사용 (Repository)
 
+- `LIKE` 와 같이 문자열의 조합이 필요한 경우에는 `CONCAT` 을 이용할 수 있습니다. 
+  - WebServer내에서도 처리가 가능하지만 의미가 불명확해질 수 있음으로 쿼리내에서 처리하는 것을 추천합니다.
+- 미리 준비된 함수를 사용할 수도 있습니다 
+  - `UsernameLike`
+  - `UsernameStartingWith`
+  - `UsernameEndingWith`
+  - `UsernameContaining`
+
 ```java
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Integer> {
 
-    @Query("SELECT r FROM Room r WHERE r.roomName = :roomName")
-    Page<Room> findByRoomName(@Param("roomName") String roomName, Pageable pageable);
+  @Query("SELECT r FROM Room r WHERE r.roomName = :roomName")
+  Page<Room> findByRoomName(@Param("roomName") String roomName, Pageable pageable);
+
+  @Query("SELECT u FROM user u WHERE u.username LIKE CONCAT('%', :username, '%')")
+  List<User> findUserByUsernameLike(@Param("username") String username);
 }
 ```
 
@@ -264,7 +275,53 @@ public interface RoomRepository extends JpaRepository<Room, Integer>, RoomReposi
 
 ### #감사정보부여
 
+[참조] <https://tramyu.github.io/java/spring/jpa-auditing/>
+
 > 스프링 데이터가 제공하는 감사기록용 EventListener 등록
+
+- `@EnableJpaAuditing` 를 설정
+
+- Entity에 `@EntityListeners(value = { AuditingEntityListener.class })`를 설정
+- 생성자/수정자의 경우에는 별도의 구현체를 지정해야 합니다.
+
+
+
+> Config & Entity 설정
+
+```java
+@EnableJpaAuditing
+@Configuration
+public class JpaConfig {
+
+}
+
+@Entity
+@EntityListeners(value = { AuditingEntityListener.class })
+@Table
+public class Table { 
+
+}
+```
+
+> 생성자/수정자 구현체
+
+```java
+@EnableJpaAuditing(auditorAwareRef="securityAuditorAware")
+@Configuration
+public class JpaConfig {
+
+}
+
+@Component
+public class SecurityAuditorAware implements AuditorAware<String> {
+
+	@Override
+	public String getCurrentAuditor() {
+		return "userId";
+	}
+}
+
+```
 
 - `@CreateBy`
   - 데이터 작성자정보를 저장하는 프로퍼티

@@ -109,6 +109,13 @@ CREATE TABLE Test2
 
 
 
+### #DEFAULT
+
+- 저장되는 값이 `null`로 전달됬을 경우 설정한 Default 값이 설정됩니다.
+- `NOT NULL` 의 속성이 있는 경우 보통 같이 사용합니다.
+
+
+
 ### #ENGINE
 
 - UTF8 -> utf8mb3, utf8mb4
@@ -117,6 +124,13 @@ CREATE TABLE Test2
 ```sql
 ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
+
+
+
+### #AUTO_INCREMENT
+
+- UniqueKey를 자동으로 증가하는 Sequence로 처리하는 방식입니다.
+- 가장 큰 수에서 +1을 하는 방식으로 UniqueKey를 생성합니다.
 
 
 

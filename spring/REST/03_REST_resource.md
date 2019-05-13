@@ -1,4 +1,4 @@
-## #Resource
+## Resource
 
 - 리소스 클래스는 JSON 이나 XML 형식의 데이터를 자바빈즈로 표현한 클래스
 - 스프링 MVC는 리소스 클래스를 통해서 서버오 클라이언트 사이의 리소스 상태를 연계하는 역할을 합니다.
@@ -22,23 +22,15 @@
 
 > 변환된 Resource
 >
-<<<<<<< HEAD
 > - JSON과 연동할 POJO 클래스를 만든다. 클래스명에 특별한 제한은 없으나 접미사 `Resource`로 명명하는 것을추천
 > - JSON 필드명과 같은 프로퍼티명을 만든다.
 >   - 만약, 이름이 다를경우 `@JsonProperty` 를 이용해서 이름을 매핑합니다. 
 > - 여러개를 다뤄야할때는 `List`를 사용
-> - 프로퍼티 타입에 적절한 타입을 지
-=======
-> - 주의할 점은 json 프로퍼티명과 resource 프로퍼티명이 같아야 한다는 점
->>>>>>> 8037b4cb1f838ac3ff44e87fc0bb1a9b46cdd6d1
+> - 프로퍼티 타입에 적절한 
 
 ```java
 public class BookResource implements Serializable {
     private static final long serialVersionUID = -9115030674240690591L;
-<<<<<<< HEAD
-=======
-
->>>>>>> 8037b4cb1f838ac3ff44e87fc0bb1a9b46cdd6d1
     private String bookId;
     private String name;
     private List<String> authors;
@@ -56,15 +48,13 @@ public class BookResource implements Serializable {
 
 
 
-## #Jackson
+### Jackson
 
-- 포맷제어에 이용한는 라이브러리
+- 포맷제어에 이용한는 서드파티 라이브러리
   - JSON 들여쓰기 설정
   - 언더스코어('\_')로 구분되는 JSON 필드를 다루는 법
   - Java SE8에서 추가된 Date and Time API 클래스를 지원
   - 날짜/시간 타입의 포맷을 지정
-
-
 
 > 애너테이션 종류
 
@@ -76,21 +66,12 @@ public class BookResource implements Serializable {
 - @JsonSerialize
 - @JsonDeserialize
 
-
-
 > 기능
 
-- ObjectMapper 
-  - JSON <-> POJO 객체 변환
-
 - Jackson2ObjectMapperBuilder
-  - 빌드패턴을 이용해서 ObjectMapper를 만드는 클래스로 자바기반 설저방식으로 빈을 정의
 - Jackson2ObjectMapperFactoryBean
-  - 스프링이 제공하는 FactoryBean을 사용해서 ObjectMapper를 만드는 클래스로 주로 XML 기반 방식에서 빈을 정의시에 사용
 
-
-
-### #Jackson2ObjectMapperBuilder
+> Jackson2ObjectMapperBuilder 예
 
 ```Java
 @Bean
@@ -112,13 +93,16 @@ ObjectMapper objectMapper() {
 }
 ```
 
+> Date and Time 클래스 지원
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.datatype</groupId>
+    <artifactId>jackson-datatype-jsr310</artifactId>
+  </dependency>
+```
+
 > Date and Time 포맷지정방법
->
-> - `StdDateFormat` - ISO8601의 날짜/시간을 지원
->   - `LocalDate` yyyy-MM-dd
->   - `LocalTime` HH:mm:ss.SSS
->   - `LocalDateTime` yyyy-MM-dd'T'HH:mm:ss:SSS
->   - `ZonedDateTime` yyyy-MM-dd'T'HH:mm:ss:SSS'Z'
 
 ```java
 @Bean
@@ -130,9 +114,14 @@ ObjectMapper objectMapper() {
 }
 ```
 
+- ISO 8601 날짜/시간형식(yyyy-MM-dd)로 처리
+- StdDateFormat 포맷 종류
+  - LocalDate : yyyy-MM-dd
+  - LocalDateTime : yyyy-MM-dd'T'HH:mm:ss:SSS
+  - ZonedDateTime : yyyy-MM-dd'T'HH:mm:ss:SSS'Z'
+  - LocalTime HH:mm:ss.SSS
 
-
-### #Jackson 활용
+### Jackson 활용
 
 > Json -> POJO
 

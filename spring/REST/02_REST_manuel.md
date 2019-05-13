@@ -109,7 +109,7 @@ public ResponseEntity〈Void〉createBook(@Validated @RequestBody BookResource n
     String resourceUri = "http://localhost:8080/books/" + createdBook.getBookid();
     return ResponseEntity.created(URI.create(resourceUri)).build();
 }
-
+p
 @RequestMapping(path = "{bookld}", method=RequestMethod.PUT)
 @ResponseStatus(HttpStatus.NO_CONTENT)
 public void put(@PathVariable String bookid, @Validated @RequestBody BookResource resource) {
