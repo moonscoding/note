@@ -24,9 +24,9 @@
 
 - [ ] SPRING
   - [x] DI
-  - [ ] AOP
-  - [ ] data
-  - [ ] MVC
+  - [x] AOP
+  - [x] data
+  - [x] MVC
   - [ ] security
   - [ ] boot
   - [ ] batch
@@ -41,6 +41,13 @@
 - [ ] ElK
 
 - [ ] MSA
+
+  - [x] springboot
+  - [x] config
+  - [x] discovery
+  - [x] recovery
+  - [x] gateway
+  - [ ] security
 
 - [ ] network
 
