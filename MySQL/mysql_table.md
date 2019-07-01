@@ -52,9 +52,12 @@
 - TIME - 시간(시, 분, 초)
   - size : 3 byte
 - DATETIME - 날짜 + 시간
-  - size : 8 byte
+  - size : 8 byte (1000-01-01 00:00:00.000000 ~ 9999-12-31 23:59:59.999999)
+  - 차이 : TIMEZONE을 입력값에으로 설정
 - TIMESTAMP[(M)] 
-  - size : 4 byte
+  - size : 4 byte (1970-01-01 00:00:01.000000 ~ 2038001-19 03:14:07.999999)
+  - 차이 : SYSTEM_TIMEZONE으로 입출력
+  - 특징 : 검색성능은 ? 
 - YEAR - 년도표현
   - size : 1byte
 

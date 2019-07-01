@@ -27,7 +27,7 @@
 
 
 
-### #로드밸런서
+### [Before]로드밸런서
 
 ![1557307807099](assets/1557307807099.png)
 
@@ -69,7 +69,7 @@
 
 
 
-### #서비스디스커버리
+### [After]서비스디스커버리
 
 ![1552636395720](1552636395720.png)
 
@@ -91,7 +91,7 @@
 
 
 
-#### #아키택처
+#### 아키택처
 
 - `서비스등록`
   - 서비스를 서시브디스커버리 에이전트에 어떻게 등록할텐가
@@ -106,7 +106,7 @@
 
 
 
-#### #클라이언트측부하분산
+#### 클라이언트측부하분산
 
 - 서비스소비자가 요청한 모든 서비스 인스턴스를 위해 서비스 디스커버리 서비스에 접속한 후 데이터를 서비스 소비자 기기에 로컬 캐시
 - 클라이언트가 서비스를 호출하려할때 서비스 소비자는 캐시에서 위치 정보를 검색
@@ -121,7 +121,7 @@
 
 
 
-### #유레카
+### Eureka
 
 - 서비스 디스커버리 에이전트를 설정
 - 여러 서비스 에이전트를 등록해서 서비스 디스커버리를 구현
@@ -129,7 +129,7 @@
 
 
 
-#### #과정
+#### 과정요약
 
 - 서비스 부트스트래핑 시점에 라이선싱 및 조직 서비스는 자신의 유레카 서비스에 등록
   - 서비스 ID와 함께 각각 서비스 인스턴스의 물리적 위치/포트 번호를 유레카에 알려줌
@@ -139,7 +139,7 @@
 
 
 
-#### #서버구축
+#### 서버구축
 
 - Eureka Server를 구축하는 방법을 알아봅시다.
 
@@ -158,7 +158,7 @@
 
 > application.yml (EurekaServer)
 
-- server.port
+- `server.port`
 - `registerWithEureka`
   - 자신을 유레카 서비스에 등록하지 않도록 설정
 - `fetchRegistry`
@@ -199,7 +199,7 @@ public class Application {
 
 
 
-#### #서비스등록
+#### 서비스등록
 
 - Eukera에 Client Server를 등록하는 법을 알아봅시다.
 - 조직과 라이선싱 서비스를 구성해 유레카 서비스에 등록
@@ -267,39 +267,49 @@ eureka:
 
 
 
-#### #서비스확인
+#### 서비스확인
 
-> http://<ip>:8761/eureka/apps/{name}
+##### EurekaServer확인
+
+- 반영 시간이 조금 걸릴 수 있습니다.
+
+> http://{eureka_ip}:8761/eureka/apps/{name}
+
+
+
+> warn-up
 
 - 유레카에 등록하면 서비스가 가용하다고 확인될 때까지 30초간 연속 세 번의 상태정보를 확인하며 대기
 - 개발자들은 이 예열(warn-up) 시간으로 서비스 시작 직후 서비스에 호출을 시도해 유레카가 등록되지 못하는 우려에서 벗어남
 
 
 
-#### #반환형식
+> 반환형식
 
 - `eureka` 서비스가 반환하는 기본 형식은 XML
 - HTTP Accept 헤더를 application/json 으로 설정하면 json 반환도 가능합니다.
 
 
 
-#### #대기시간(warn-up)
+##### EukekaClient확인
 
-- `eureka`에 서비스가 등록되면 가용하다고 확인될 때까지 30초간 연속 세 번의 상태 정보를 확인하며 대기
-
-
-
-### #서비스검색
-
-- 스프링 디스커버리 클라이언트
-- RestTemplate 활성화된 스프링 디스커버리 클라이언트
-- 넥플릭스 Feign 클라이언트
+- 라이선싱 서비스는 조직 서비스 위치를 직접 알지 못해도 호출 할 수는 있음
+- 라이선싱 서비스가 유레카를 사용해서 조직 서비스의 물리적 위치를 검색하기 때문
+- 서비스 소비자가 리본과 상호 작용할 수 있는 스프링/넷플릭스의 클라이언트 라이브러리 세가지를 살펴봅니다.
+  - `Spring DiscoveryClient`
+  - `RestTemplate 활성화된 스프링 디스커버리 클라이언트`
+  - `넷플릭스 Feign 클라이언트`
 
 
-
-#### #DiscoveryClient
 
 > LicenseServiceController.java
+
+- Discovery 
+  - 디스커버리 클라이언트와 표준 스프링 RestTemplate 클래스를 사용해서 조직 서비스 호출
+- Rest
+  - 향상된 스프링 RestTemplate을 사용해서 리본 기반의 서비스 호출
+- Feign
+  - 넷플릭스 Feign 클라이언트를 사용해서 리본을 통해 서비스 호출
 
 ```java
 @RequestMapping(value="/{licenseId}/{clientType}",method = RequestMethod.GET)
@@ -310,19 +320,14 @@ public License getLicensesWithClient( @PathVariable("organizationId") String org
 }
 ```
 
-- Discovery 
-  - 디스커버리 클라이언트와 표준 스프링 RestTemplate 클래스를 사용해서 조직 서비스 호출
-- Rest
-  - 향상된 스프링 RestTemplate을 사용해서 리본 기반의 서비스 호출
-- Feign
-  - 넷플릭스 Feign 클라이언트를 사용해서 리본을 통해 서비스 호출
 
-> LicenseService.java
+
+> LicensService.java
 
 ```java
 public License getLicense(String organizationId,String licenseId, String clientType) {
+    
     License license = licenseRepository.findByOrganizationIdAndLicenseId(organizationId, licenseId);
-
     Organization org = retrieveOrgInfo(organizationId, clientType);
 
     return license
@@ -334,36 +339,172 @@ public License getLicense(String organizationId,String licenseId, String clientT
 }
 ```
 
-- `DiscoveryClient`와 현실
-  - DiscoveryClient를 살펴보며 리본으로 서비스 소비자를 구축하는 방법을 마무리
-  - 실제 서비스가 리본에 질의해서 등록된 서비스와 서비스 인스턴스를 알아야 할 때만  직접 DiscoveryClient 사용
-    - 문제점
-      - 리본 클라이언트 측 부하 분산의 장점을 얻지 못함
-      - 너무 많은 일을 처리
+
+
+###### [CASE1] DiscoveryClient
+
+- 스프링 `DiscoveryClient`는 리본과 등록된 서비스에 가장 저수준의 접근성을 제공
+- DiscoveryClient를 사용하면 리본 클라이언트와 해당 URL에 등록된 모든 서비스에 대해 질의할 수 있음
 
 
 
-#### #RestTemplate
+> [우선작업] Application.java
+>
+> = 유레카 Discovery Client를 사용하기 위해 부트스트랩 클래스 설정
 
-- 리본을 지원하는 RestTemplate을 사용하는 방법을 보여주는 예제
-- 리본 지원 RestTemplate 클래스를 사용하려면 `@LoadBalanced` 애너테이션으로 RestTemplate 빈 생성 메서드를 정의
+- `@EnableDiscoveryClient` 
+  - 스프링 클라우드에서 애플리케이션이 DiscoveryClient와 리본 라이브러리를 사용할 수 있게 처리
 
 ```java
-@LoadBalanced
-@Bean
-public RestTemplate getRestTemplate(){
-    return new RestTemplate();
+@SpringBootApplication
+@EnableDiscoveryClient // 스프링 DiscoveryClient 활성화
+@EnableFeignClients
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
 }
 ```
 
 
 
-#### #Feign
+> `DiscoveryClient`를 사용한 정보 검색
+
+- 만약 Discovery에 Organization 서버가 연동되어 있다면 DiscoveryClient를 이용하여 질의를 할 수 있습니다. 
+- [ERROR] org.springframework.web.client.HttpClientErrorException: 404 null
+  - instances를 선택하는 과정에서 다른 유레카 경로를 잡는 경우가 있음
+  - uniquekey로 알맞은 instance를 선택해야 합니다
+
+```java
+@Component
+public class OrganizationDiscoveryClient {
+
+    /* org.springframework.cloud.client.discovery.DiscoveryClient */
+    @Autowired
+    private DiscoveryClient discoveryClient; // `DiscoveryClient`는 이 클래스에 자동 연결
+
+    public Organization getOrganization(String organizationId) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        // 조직 서비스의 모든 인스턴스 목록 얻기 (ServiceInstance)
+        List<ServiceInstance> instances = discoveryClient.getInstances("organizationservice");
+        if (instances.size()==0) return null;
+
+        // 호출할 서비스 엔드포인트 조회
+        String serviceUri = String.format(
+            "%s/v1/organizations/%s",
+            instances.get(0).getUri().toString(), organizationId);
+
+        // 서비스를 호출하는데 표준 스프링 RestTemplate 클래스 사용
+        ResponseEntity< Organization > restExchange =
+                restTemplate.exchange(
+                        serviceUri,
+                        HttpMethod.GET,
+                        null, Organization.class, organizationId);
+
+        return restExchange.getBody();
+    }
+}
+```
+
+
+
+
+
+> `DiscoveryClient` 상세히
+
+- DiscoveryClient를 살펴보며 리본으로 서비스 소비자를 구축하는 방법을 마무리
+- 실제 서비스가 리본에 질의해서 등록된 서비스와 서비스 인스턴스를 알아야 할 때만  직접 DiscoveryClient 사용
+
+
+
+> 다음코드의 문제점
+
+- `리본 클라이언트 측 부하 분산의 장점을 얻지 못함`
+  - DiscoveryClient를 직접 호출하면 서비스 목록이 반환되지만 목록에서 호출할 `서비스를 선택할 책임이 사용자에게 있음`
+- `너무 많은 일을 처리`
+  - 서비스 호출에 사용될 URL을 생성해야 하며, 사소한 일이지만 코드를 적게 작성하면 디버그할 코드도 줄어듬
+
+
+
+###### [CASE2] RestTemplate
+
+> 리본지원 스프링 RestTemplate을 사용한 서비스 호출
+
+- 리본을 지원하는 RestTemplate을 사용하는 방법을 보여주는 예제
+- 리본 지원 RestTemplate 클래스를 사용하려면 `@LoadBalanced` 애너테이션으로 RestTemplate 빈 생성 메서드를 정의
+  - 리본 자원 RestTemplate 클래스에 빈 정의가 완료 되면 RestTemplate 빈으로 서비스를 호출할 때마다 사용하려는 클래스에 자동 연결
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient // FeignClient만 사용함으로 @EnableDiscoveryClient 제거 가능
+@EnableFeignClients // FeignClient 사용을 위해 @EnableFeignClients 추가
+public class Application {
+
+  	@LoadBalanced
+  	@Bean
+    public RestTemplate getRestTemplate() {
+        return new RestTemplate();
+    }
+    
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+}
+```
+
+
+
+> OrganizationRestTemplateClient.class
+
+- 차이점
+  - 스프링 클라우드 DiscoveryClient 가 코드에 없음
+  - restRemplate.exchange() 호출되는 URL 형태가 다름
+  - `RestTemplate 클래스를 사용해서 서비스 인스턴스에 대한 모든 요청을 라운드 로빈 방식으로 부하 분산`
+- [ERROR] java.lang.ClassNotFoundException: com.google.common.reflect.TypeToken
+  - [SOLUTION] 의존성주입
+
+```xml 
+<dependency>
+    <groupId>com.ecwid</groupId>
+    <artifactId>ecwid-mailchimp</artifactId>
+    <version>2.0.1.0</version>
+</dependency>
+```
+
+
+
+```java
+@Component
+public class OrganizationRestTemplateClient {
+
+    @Autowired
+    RestTemplate restTemplate;
+
+    public Organization getOrganization(String organizationId){
+        ResponseEntity<Organization> restExchange =
+                restTemplate.exchange(
+                        "http://organizationservice/v1/organizations/{organizationId}", // 리본 지원 RestTemplate 사용시 유레카 서비스 ID로 URL 생성
+                        HttpMethod.GET,
+                        null, Organization.class, organizationId);
+
+        return restExchange.getBody();
+    }
+}
+
+```
+
+
+
+###### [CASE3] Feign
 
 - 넥플릿스 Feign 클라이언트로 서비스 호출
   - 스프링 리본이 활성화된 RestTemplate 클래스에 다른 대안
-  - 개발자가 자바 인터페이스를 먼저 정의한 후 리본이 호출할 유레카 기반의 서비스를 매핑하고 
+  - 개발자가 자바 인터페이스를 먼저 정의한 후 리본이 호출할 유레카 기반의 서비스를 매핑하고
   - 그 인터페이스 안에 스프링 클라우드 애너테이션을 추가해서 REST 서비스를 호출하는 접근
+
+  
 
 > Application.java
 
@@ -371,17 +512,19 @@ public RestTemplate getRestTemplate(){
 @SpringBootApplication
 @EnableDiscoveryClient // FeignClient만 사용함으로 @EnableDiscoveryClient 제거 가능
 @EnableFeignClients // FeignClient 사용을 위해 @EnableFeignClients 추가
-
 public class Application {
-
-  // ..
-
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
 }
 ```
 
+
+
 > OrganizationFeignClient.java
 
-- @FeignClient 애너테이션 사용해서 인터페이스를 대표할 서비스 애플리케이션 ID 전달
+- `@FeignClient` 
+  - 인터페이스를 대표할 서비스 애플리케이션 ID 전달
 - getOrganization() 로 클라이언트가 조직 서비스를 호출
 
 ```java
@@ -397,7 +540,7 @@ public interface OrganizationFeignClient {
 
 
 
-### #요약
+### 전체요약
 
 - 서비스 디스커버리 패턴은 서비스의 물리적 위치 추상화에 사용
 - 유레카 같은 서비스 디스커버리 엔진은 서비스 클라이언트에 영향을 주지 않고 해당 환경의 서비스 인스턴스를 원활하게 추가/삭제
@@ -407,5 +550,3 @@ public interface OrganizationFeignClient {
   - 스프링 쿨라우드와 DiscoveryClient
   - 스프링 클라우드와 리본 지원 RestTemplate
   - 스프링 클라우드와 넥플릭스 Feign 클라이언트
-
-# 

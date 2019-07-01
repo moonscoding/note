@@ -4,7 +4,15 @@
 
 ## Spring Cloud Config
 
+> 목차
 
+- 스프링 클라우드 컨피그 서버로 구성 관리
+  - 구성(그리고 복잡성) 관리
+  - 스프링 클라우드 컨피그 서버 구축
+  - 스프링 클라우드 컨피그와 스프링 부트 클라이언트 통합
+  - 중요한 구성 정보 보호
+
+  
 
 > 등장배경
 
@@ -19,14 +27,6 @@
 `config server`를 이용하면 이를 해결할 수 있습니다.
 
 
-
-> 목차
-
-- 스프링 클라우드 컨피그 서버로 구성 관리
-  - 구성(그리고 복잡성) 관리
-  - 스프링 클라우드 컨피그 서버 구축
-  - 스프링 클라우드 컨피그와 스프링 부트 클라이언트 통합
-  - 중요한 구성 정보 보호
 
 
 
@@ -93,7 +93,7 @@
 
 
 
-### #구현선택
+### 구현선택
 
 - `Etcd`
   - 설명
@@ -275,13 +275,13 @@
 
 
 
-### #부트스트랩클래스설정
+### 서버설정
 
 - 모든 스프링 클라우드 서비스는 해당 서비스를 실행할 수 있는 부트스트랩 클래스가 필요
 - 서비스시작지점 역할을 하는 자바 `main()`메서드와 
   시작하는 서비스에 스프링 클라우드의 어떤 행동 양식으로 시작할지 지정하는 스프링 애너테이션 포함
 
-> confsvr/src/main/java/com/thoughtmechanix/confsvr/ConfigServerApplication.java
+> ConfigServerApplication.java
 
 ```java
 @SpringBootApplication
@@ -295,7 +295,7 @@ public class ConfigServerApplication {
 
 
 
-### #파일시스템
+### [CASE1] FileSystem연동
 
 > 파일 시스템과 스프링 클라우드 컨피그 서버 사용
 
@@ -308,21 +308,44 @@ public class ConfigServerApplication {
 server:
   port: 8888
 spring:
+  # must
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          searchLocations: classpath:config/,classpath:config/licensingservice
+```
+
+
+
+### [CASE2] Git연동
+
+- 스프링 클라우드 컨피그 서버의 백엔드 저장소로 파일 시스템이 적합하지 않음
+  - 개발팀이 컨피그 서버의 모든 인스턴스에 마운트될 공유 파일 시스템을 설정하고 관리해야 하기 때문
+- 컨피그 서버는 애플리케이션 구성 프로퍼티를 호스팅하는 다양한 백엔드 저장소와 통합가능
+  - 깃 소스 관리 저장소와 함께 스프링 클라우드 컨피그 서버를 사용도 가능
+
+```yaml 
+server:
+  port: 8888
+spring:
   cloud:
     config:
       server:
         # encrypt.enabled should moved to bootstrap.yml
-        # encrypt.enabled: false
-        git:
-          uri: https://github.com/klimtever/config-repo/
-          searchPaths: licensingservice,organizationservice
+        encrypt.enabled: false
+        git: # 컨피그에 벡엔드 저장소로 깃을 사용한다고 전달
+          uri: https://github.com/klimtever/config-repo/ # 컨피그에 깃 서버와 깃 repo URI 전달
+          searchPaths: licensingservice,organizationservice #  컨피그에 구성 파일을 찾을 깃 경로
           username: native-cloud-apps
           password: 0ffended
 ```
 
 
 
-### #클라이언트연결
+## 클라이언트연결
 
 > `스프링 클라우드 컨피그`와 `스프링 부트 클라이언트`의 통합
 
@@ -372,7 +395,7 @@ liensingservice:
 
 
 
-### #데이터소스연결
+### 데이터소스연결
 
 - DB구성정보가 MSA에 직접 주입
 - DB구성정보로 라이선싱 MSA 구성을 설정하면, 표준 스프링 컴포넌트를 이용해 Posgres DB에서 데이터를 빌드하고 조회할 수 있음
@@ -417,7 +440,7 @@ public interface LicenseRepository extends CrudRepository<License,String>  {
 }
 ```
 
-#### @Value
+>  @Value
 
 - @Value 애너테이션으로 프로퍼티 직접읽기
 - `@Value("${example.property}")`
@@ -438,46 +461,21 @@ public class ServiceConfig{
 
 
 
-### #깃과 컨피그 서버
-
-- 스프링 클라우드 컨피그 서버의 백엔드 저장소로 파일 시스템이 적합하지 않음
-  - 개발팀이 컨피그 서버의 모든 인스턴스에 마운트될 공유 파일 시스템을 설정하고 관리해야 하기 때문
-- 컨피그 서버는 애플리케이션 구성 프로퍼티를 호스팅하는 다양한 백엔드 저장소와 통합가능
-  - 깃 소스 관리 저장소와 함께 스프링 클라우드 컨피그 서버를 사용도 가능
-
-
-
-```yaml 
-server:
-  port: 8888
-spring:
-  cloud:
-    config:
-      server:
-        # encrypt.enabled should moved to bootstrap.yml
-        encrypt.enabled: false
-        git: # 컨피그에 벡엔드 저장소로 깃을 사용한다고 전달
-          uri: https://github.com/klimtever/config-repo/ # 컨피그에 깃 서버와 깃 repo URI 전달
-          searchPaths: licensingservice,organizationservice #  컨피그에 구성 파일을 찾을 깃 경로
-          username: native-cloud-apps
-          password: 0ffended
-```
-
-
-
-### #프로퍼티갱신
+### 프로퍼티갱신
 
 - 컨피그 서버를 사용할 때 프로퍼티가 변경될 때 스프링 클라우드 컨피그 서버가 어떻게 동적으로 애플리케이션을 갱신하는지는 중요하다
 - 컨피그 서버는 항상 최신 버전의 프로퍼티를 제공
 
 
 
-#### #@RefreshScope 
+> @RefreshScope 
 
 - 스프링 부트 애플리케이션이 /refresh 엔드포인트를 사용해 애플리케이션 구성 정보를 다시 읽어 올 수 있음
 - 애플리케이션 구성에 있는 사용자 정의 스프링 프로퍼티만 다시 로드
   - ( 데이터베이스 구성 정보같이 스프링 데이터에 정의된 구성은 로드되지 않음 )
 - 업데이트를 수행하기 위해 `http://{yourserver}:8080/actuator/refresh` 엔드포인트를 호출
+
+
 
 > Application.class (클라이언트)
 
@@ -493,7 +491,7 @@ public class Application {
 
 
 
-#### #구성정보업데이트
+#### 구성정보업데이트
 
 - 스프링 클라우드 컨피그 서비스를 마이크로 서비스와 함께 사용시에 프로퍼티를 동적으로 변경하기 전에 고려할 사항중 하나는 동일한 서비스 인스턴스가 다수 실행 중이고 새로운 애플리케이션 구성으로 모든 서비스를 업데이트해야 한다는 것
   - 스프링 클라우드 컨피그 서비스는 이 서비스를 사용하는 모든 클라에게 변경이 일어났다고 알려주는
@@ -504,7 +502,7 @@ public class Application {
 
 
 
-### #정보보호&암호화
+## 정보보호&암호화
 
 > 중요한 구성 정보 보호
 
@@ -555,10 +553,11 @@ RUN chmod +x run.sh
 CMD ./run.sh
 ```
 
+
+
 ##### #암호화키설정
 
 - JAR 파일 준비시 대칭 암호화 키 설정
 - 대칭 암호화 키는 암호자가 값을 암호화하고 복호자가 복호화 하는데 사용하는 공유된 비밀키
 
-- 
 
