@@ -31,7 +31,7 @@ OAuth2.0을 시작하기전에 다음글을 먼저 읽으면 도움이 됩니다
 
 >  인증과 인가
 
-- `인증(Authentication)
+- `인증(Authentication)`
   - `자격증명을 제공해서 자신이 누구인지 증명하는 행위
 - `인가(Authorization)`
   - 사용자가 수행하려는 작업의 허용여부를 결정
@@ -42,8 +42,7 @@ OAuth2.0을 시작하기전에 다음글을 먼저 읽으면 도움이 됩니다
 
 - 토큰기반의 보안 프레임워크
   - 사용자는 자원에 접근하려는 app을 통해서 자격 증명을 제시하고 OAuth2 서버에서 인증
-  - 사용자의 자격 증명이 유효하면 
-    OAuth2 서버는 사용자 app이 이용하는 서비스가 보호 자원(MSA)에 접근하려고 시도할 때마다 제시할 토큰을 제공
+  - 사용자의 자격 증명이 유효하면 OAuth2 서버는 사용자 app이 이용하는 서비스가 보호 자원(MSA)에 접근하려고 시도할 때마다 제시할 토큰을 제공
   - 보호자원은 OAuth2서버에 접속해서 토큰 유효성을 확인하고 사용자가 지정한 역할을 조회할 수 있음
   - 역할은 연관된 사용자를 함께 그룹으로 묶고 사용자 그룹이 액세스할 수 있는 자원을 정의
 
@@ -74,13 +73,21 @@ OAuth2.0을 시작하기전에 다음글을 먼저 읽으면 도움이 됩니다
 ![1559194007746](assets/1559194007746.png)
 
 - 보호자원은 OAuth2 서버에 접속해 토큰 유효성을 확인하고 사용자가 지정한 역할(ROLE)을 조회할 수 있습니다
+
 - 역할은 연관된 사용자르 함께 그룹으로 묶어 사용자그룹이 엑세스할 수 있는 자원을 정의
+
 - OAuth2.0의 그랜트(Grants)라는 인증체계를 이용하여 다양한 시나리오에서 REST기반 서비스를 보호
-- 다음 4가지의 그랜트 타입
+
+
+
+> 다음 4가지의 그랜트 타입
+
   - 패스워드
   - 클라이언트 자격증명
   - 인가코드
   - 암시적
+
+
 
 > 더 자세한 OAuth2.0의 그랜트 개요는 후반후에 설명
 
@@ -90,20 +97,22 @@ OAuth2.0을 시작하기전에 다음글을 먼저 읽으면 도움이 됩니다
 
 - OAuth2의 인증과 인가설정방법을 이해하기 위해서 OAuth2 패스워드 그랜트 타입을 구현
 - 필요한 수행작업
-  - 스프링 클라우드 기반 OAuth2 인증 서비스를 설정
-  - OAuth2 서비스와 사용자 신원을 인증 및 인가할 수 있도록 
-    인가된 app 역할을 하는 가짜 EagleEye UI app 등록
-  - OAuth2 패스워드 그랜트 타입을 사용해서 EagleEye 서비스 보호
-    EagleEye UI를 만들지 않고 EagleEye OAuth2 서비스에 인증하는 PostMan으로 사용자 로그인 시뮬레이션 진행
-  - 인증된 사용자만 호출 할 수 있도록 라이선싱 및 조직서비스 보호
+  1. 스프링 클라우드 기반 `OAuth2 인증 서비스`를 설정
+  
+  2. OAuth2 서비스와 사용자 신원을 인증 및 인가할 수 있도록 인가된 app 역할을 하는 `가짜 EagleEye UI app` 등록
+  
+  3. OAuth2 패스워드 그랜트 타입을 사용해서 EagleEye 서비스 보호
+     EagleEye UI를 만들지 않고 EagleEye OAuth2 서비스에 인증하는 PostMan으로 사용자 로그인 시뮬레이션 진행
+  
+  4. 인증된 사용자만 호출 할 수 있도록 라이선싱 및 조직서비스 보호
 
 
 
-### OAuth2_Server
+### OAuth2 구성 (Server)
 
 > [궁금증] EagleEye가 무엇?
 >
-> =>
+> => 로그인을 제공하기 위해서 OAuth와 연결해주는 중간 서버라고 생각
 
 
 
@@ -241,8 +250,6 @@ public class OAuth2Config extends AuthorizationServerConfigurerAdapter {
 
 
 
-### OAuth2_Server_구성
-
 > WebSecurityConfigurer.java
 
 - AutherticationManagerBean
@@ -294,41 +301,41 @@ public class WebSecurityConfigurer extends WebSecurityConfigurerAdapter {
 
 
 
-> 사용자인증
+### OAuth2 인증 (Client)
 
 POSTMAN에서s http://localhost:8901/auth/oauth/token 엔드포인트를 호출시에 
 
 시크릿 키 / 패스워드를 제공하여 OAuth2 토큰을 획득하는 사용자 시뮬레이션 진행
 
-- 매개변수
+> Request
 
-  - 그랜트타입(grant_type) 
-    - 실행할 OAuth2 그랜트 타입
-  - 스코프(scope)
-    - 애플리케이션을 위한 범위로 애플리케이션(webclient & mobileclient)을 등록할 떄 두 스코프 중 한 값이 전달되야
-  - 사용자이름(username) 
-    - 로그인하는 사용자이름
-  - 패스워드(password)
-    - 로그인하는 사용자패스워드		
+- `그랜트타입(grant_type) `
+  - 실행할 OAuth2 그랜트 타입
+- `스코프(scope)`
+  - 애플리케이션을 위한 범위로 애플리케이션(webclient & mobileclient)을 등록할 떄 두 스코프 중 한 값이 전달되야
+- `사용자이름(username) `
+  - 로그인하는 사용자이름
+- `패스워드(password)`
+  - 로그인하는 사용자패스워드		
 
-- 반환페이로드
+> Response
 
-  - access_token
-    - 사용자가 보호 자원에 대한 서비스를 호출할 때 마다 제시할 OAuth2 토큰
-  - token_type
-    - OAuth2 표준 명세는 여러 토큰 타입을 정의할 수 있도록 허용
-    - 베어러(bearer)토큰이 가장 일반적
-  - refresh_token
-    - 토큰이 만료된 후 재발행하기 위해 OAuth2 서버에 다시 제시하는 토근
-  - expires_in
-    - OAuth2 엑세스 토큰이 만료되기때지 남은시간(초) 
-    - 스프링에서 default 는 12시간
-  - scope
-    - OAuth2 토큰이 유효한 범위
+- `access_token`
+  - 사용자가 보호 자원에 대한 서비스를 호출할 때 마다 제시할 OAuth2 토큰
+- `token_type`
+  - OAuth2 표준 명세는 여러 토큰 타입을 정의할 수 있도록 허용
+  - 베어러(bearer)토큰이 가장 일반적
+- `refresh_token`
+  - 토큰이 만료된 후 재발행하기 위해 OAuth2 서버에 다시 제시하는 토근
+- `expires_in`
+  - OAuth2 엑세스 토큰이 만료되기때지 남은시간(초) 
+  - 스프링에서 default 는 12시간
+- `scope`
+  - OAuth2 토큰이 유효한 범위
 
-  
 
-### OAuth2_Client
+
+### OAuth2 연동
 
 지금까지 OAuth2 인증서비스에 애플리케이션 등록 및 개별사용자 계정의 역할을 설정했음
 

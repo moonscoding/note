@@ -447,14 +447,16 @@ APP의 각 서비스를 수정하지 않고 모든 서비스에서 작용하기 
 
 ##### 종류
 
-- `사전필터`
+###### Filter 종류
+
+- `[1]사전필터`
   - 주울에서 목표 대상에 대한 실제 요청이 발생하기 전에 호출
   - 일반적으로 사전 필터는 서비스의 일관된 메시지 형식 ( ex http 해더 포함 여부) 을 확인하는 작업을 수행하거나 
     서비스 이용하는 사용자가 인증 및 인가되었는지 확인하는 `게이트키퍼` 역할
-- `사후필터`
+- `[2]사후필터`
   - 대상 서비스를 호출하고 응답을 클라이언트로 전송한 후 호출
   - 일반적으로 사후 필더는 대상 서비스의 응답을 `로깅하거나 에러 처리, 민감한 정보에 대한 응답을 감시`
-- `경로필터`
+- `[3]경로필터`
   - 대상 서비스가 호출되기 전에 호출을 가로채는데 사용
   - 일반적으로 경로 필터는 일정 수준의 동적 라우팅 필요 여부를 결정하는데 사용
   - 예를 들어 뒷부분에서 동일 서비스의 다른 두 버전을 라우팅할 수 있는 경로 단위 필터를 사용해서 
@@ -464,6 +466,8 @@ APP의 각 서비스를 수정하지 않고 모든 서비스에서 작용하기 
 ![1560502446835](assets/1560502446835.png)
 
 
+
+###### Class 종류
 
 - `TrackingFilter`
   - 주울에서 보내는 모든 요청에 연관된 상관관계 ID 여부를 확인하는 사전 필터
@@ -484,17 +488,19 @@ APP의 각 서비스를 수정하지 않고 모든 서비스에서 작용하기 
 
 
 
-##### TrackingFilter
+##### [1] 사전필터
 
-> 상관관계ID를 생성하는사전필터
+> 상관관계ID를 생성하는 사전필터
 
 `TrackingFilter` 라는 사전 필터를 만들어 게이트웨이로 들어오는 모든 요청을 검사하며
 
-요청안에 `tmx-correlation-id` 라는 HTTP 해더가 있는지 판별
+요청 안에 `tmx-correlation-id` 라는 HTTP 해더가 있는지 판별
 
 `tmx-correlation-id` 해더에는 여러 MSA 전달되는 사용자 요청을 추적하는데 사용하는 고유한 GUID ( Globally Unique ID) 포함
 
 
+
+###### TrackingFilter
 
 > TrackingFilter.java
 
@@ -610,7 +616,7 @@ HTTP 요청에서 상관관계 ID를 읽어 와서 접근할 수 있는 클래�
 
 
 
-##### UserContextFilter
+###### UserContextFilter
 
 > 유입되는 HTTP 요청을 가로채는 UserContextFilter
 
@@ -666,7 +672,7 @@ public class UserContextFilter implements Filter {
 
 
 
-##### UserContext&UserContextHolder
+###### UserContext&UserContextHolder
 
 > 서비스가 쉽게 액세스 할 수 있는 HTTP 헤더를 만드는 UserContext
 
@@ -731,7 +737,7 @@ public class UserContextHolder {
 
 
 
-##### RestTemplate&UserContextInterceptor
+###### RestTemplate&UserContextInterceptor
 
 > 상관관계 ID의 전파를 보장하는 사용자 정의 RestTemplate과 UserContextInterceptor
 
@@ -766,4 +772,73 @@ public class UserContextInterceptor implements ClientHttpRequestInterceptor {
     }
 }
 ```
+
+##### [2] 사후필터
+
+> 상관관계 ID를 전달받는 사후 필터 작성
+
+주울은 서비스 클라이언트를 대신해 실제 HTTP 호출을 실행
+
+주울은 대상 서비스 호출에 대한 응답을 검사한 후 수정하거나 추가 정보를 삽입가능
+
+주울의 사후 필터는 사전 필터로 데이터를 캡처하는 것과 연계할 때 측정 지표를 수집 사용자 트랜잭션과 연관된 모든 로깅을 완료할 최적의 장소
+
+
+
+###### ResponseFilter
+
+> ResponseFilter.java
+
+```java
+@Component
+public class ResponseFilter extends ZuulFilter{
+    private static final int  FILTER_ORDER=1;
+    private static final boolean  SHOULD_FILTER=true;
+    private static final Logger logger = LoggerFactory.getLogger(ResponseFilter.class);
+    
+    @Autowired
+    FilterUtils filterUtils;
+
+    @Override
+    public String filterType() {
+        return FilterUtils.POST_FILTER_TYPE;
+    }
+
+    @Override
+    public int filterOrder() {
+        return FILTER_ORDER;
+    }
+
+    @Override
+    public boolean shouldFilter() {
+        return SHOULD_FILTER;
+    }
+
+    @Override
+    public Object run() {
+        RequestContext ctx = RequestContext.getCurrentContext();
+
+        logger.debug(
+            "Adding the correlation id to the outbound headers. {}", 
+            filterUtils.getCorrelationId());
+
+        // 원래 HTTP 요청에서 전달된 상관관계 ID를 가져와 응답에 삽입
+        ctx.getResponse()
+            .addHeader(
+            FilterUtils.CORRELATION_ID, 
+            filterUtils.getCorrelationId());
+
+        // 처음부터 끝까지 주울에 들어오고 나가는 요청 항목을 보여주기 위해 나가는 요청 URI를 기록
+        logger.debug(
+            "Completing outgoing request for {}.", 
+            ctx.getRequest().getRequestURI());
+
+        return null;
+    }
+}
+```
+
+
+
+##### [3] 동적경로필터
 
