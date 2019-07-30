@@ -364,10 +364,10 @@ OAuth2로 어떻게 자원을 보호하는지 알아보자
   <artifactId>spring-cloud-security</artifactId>
 </dependency>
 
-<dependency>
+< -- <dependency>
   <groupId>org.springframework.security.oauth</groupId>
   <artifactId>spring-security-oauth2-client</artifactId>
-</dependency>
+</dependency> -->
 ```
 
 
@@ -387,7 +387,7 @@ security:
 
 > Application.java
 
-- @EnableResourceServer 
+- @EnableResourceServer
   - 스프링 클라우드와 스프링 시큐리티에 해당 서비스가 보호 자원이라 알림
   - 서비스로 유입되는 모든 호출을 가로채 HTTP 해더에 OAuth2 Access Token이 있는지 확인한 후 토큰 유효성을 확인하기 위해 
     `security.oauth2.resource.userInfoUri`에 정의된 콜백 URL로 다시 호출
@@ -445,7 +445,7 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
 
 
 
-#### OAuth2_Client AccessToken 전파
+### OAuth2 전파 (AccessToken)
 
 서비스 간 OAuth2 토큰을 전파하는 방법
 
@@ -461,10 +461,10 @@ public class ResourceServerConfiguration extends ResourceServerConfigurerAdapter
 
 2. OAuth2 자원 서비스가 되도록 구성하고 인가 규칙을 설정
 3. HTTP Authorization 헤더가 호출에 주입되었는지 확인
-   스프링 시큐리티가 없다면 라이선싱 서비스로 유입되는 호출에서 HTTP 헤더를 가져오는서블릿 필터를 작성하고 
-   라이선싱 서비스에서 나가는 모든 호출에 이 헤더를 직접 추가
-   스프링 OAuth2 는 OAuth2 호출을 지원하는 새로운 RestTemplate 클래스인 `OAuth2RestTemplate` 제공
-   사용하려면 먼저 다른 OAuth2 보호서비스를 호출하는 서비스에 자동 연결 될 수 있는 빈으로 노출
+   - 스프링 시큐리티가 없다면 라이선싱 서비스로 유입되는 호출에서 HTTP 헤더를 가져오는서블릿 필터를 작성
+   - 라이선싱 서비스에서 나가는 모든 호출에 이 헤더를 직접 추가
+   - 스프링 OAuth2 는 OAuth2 호출을 지원하는 새로운 RestTemplate 클래스인 `OAuth2RestTemplate` 제공
+   - 사용하려면 먼저 다른 OAuth2 보호서비스를 호출하는 서비스에 자동 연결 될 수 있는 빈으로 노출
 
 ```java
 @Bean
@@ -507,7 +507,7 @@ public class OrganizationRestTemplateClient {
 
 
 
-### JWT OAuth2_Server
+### JWT OAuth2 구성 (Server)
 
 OAuth2 토큰 표준이 부족한 것을 해결하기 위해 JWT(Javascript Web Token) 표준 등장
 
@@ -517,16 +517,16 @@ OAuth2 토큰을 위한 표준 구조를 제공
 
 > 특징
 
-- 작다
+- `작다`
   - Base64로 인코딩되어 UR이나 HTTP 헤더, HTTP POST 매개변수로 쉽게 전달
-- 암호로 서명
+- `암호로 서명`
   - 토큰을 발행하는 인증 서버에서 서명
   - 토큰이 조작되지 않았다는것을 보장할 수 있다는 의미
-- 자체 완비형 (self-contained)
+- `자체 완비형 (self-contained)`
   - JWT 토큰은 암호로 서명되어 서비스를 수신하는 MSA 토큰의 내용물이 유효하다는 것을 보장 받음
   - 수신 MSA가 토큰의 서명 유효성을 검증하고 토큰 내용물(토큰의 만료 시간과 사용자 정보 같은)을 확인할 수 있음
   - 토큰 내용물을 검증하기 위해 인증 서비스를 다시 호출하지 않음
-- 확장 가능
+- `확장 가능`
   - 인증 서비스가 토큰을 생성할 때 토큰이 봉인되기 전에 토큰에 추가 정보를 넣음
   - 수신 서비스는 토큰 페이로드를 복호화해서 추가 정보를 조회
 
@@ -640,22 +640,46 @@ public class JWTOAuth2Config extends AuthorizationServerConfigurerAdapter {
 - 실제 토큰 자체는 자바스크립트로 반환되지 않고 자바스크립트 본문의 Base64로 인코딩
 - JWT 디코더를 이용해여 토큰 결과를 볼 수 있음
   - https://jsonwebtoken.io
-- JWT 토큰을 서명했으나 암호화 하지 않음
+- JWT 토큰을 `서명했으나 암호화 하지 않음`
 - JWT 명세에서는 토큰을 확장하고 추가 정보를 토큰에 넣을 수 있도록 허용하므로 노출가능성 있음
 
 ![image-20190531235205451](assets/image-20190531235205451.png)
 
 
 
-### JWT OAuth2_Client 
+### JWT OAuth2 인증 (Client) 
+
+> OAuth2를 사용하는 Client Project내에 다음 2가지를 설정 (위내용참조)
 
 - `spring-security-jwt` 의존성추가
 - `JWTTokenStoreConfig` 설정 
 
+
+
 > Application.java
 
 ```java
+public class Application {
 
+    @Primary
+    @Bean
+    public RestTemplate getCustomRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        List interceptors = template.getInterceptors();
+        if (interceptors == null) {
+            template.setInterceptors(Collections.singletonList(
+                    // UserContextInterceptor = Authorization 헤더를 모든 REST 호출에 삽입
+                    new UserContextInterceptor()));
+        } else {
+            interceptors.add(
+                    // UserContextInterceptor = Authorization 헤더를 모든 REST 호출에 삽입
+                    new UserContextInterceptor());
+            template.setInterceptors(interceptors);
+        }
+        return template;
+    }
+
+}
 ```
 
 
@@ -663,22 +687,141 @@ public class JWTOAuth2Config extends AuthorizationServerConfigurerAdapter {
 > UserContextInterceptor.java
 
 ```java
+public class UserContextInterceptor implements ClientHttpRequestInterceptor {
 
+    @Override
+    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+        HttpHeaders headers = request.getHeaders();
+        headers.add(UserContext.CORRELATION_ID, UserContextHolder.getContext().getCorrelationId());
+        headers.add(UserContext.AUTH_TOKEN, UserContextHolder.getContext().getAuthToken());
+        // HTTP 헤더에 인증토큰을 추가
+        return execution.execute(request, body);
+    }
+}
 ```
 
 
+
+#### 토큰확장
 
 > JWTTokenEnhancer.java 
 
 - 토큰확장
-- OAuth2 서비스에 JWTTokenEnhancer 클래스를 사용한다고 알려야함1
+- OAuth2 서비스에 JWTTokenEnhancer 클래스를 사용한다고 알려야함
 
 ```java
+public class JWTTokenEnhancer implements TokenEnhancer {
 
+    // DB Connection 생략
+    // @Autowired
+    // private OrgUserRepository orgUserRepository;
+
+    private String getOrgId(String userName) {
+        // UserOrganization orgUser = orgUserRepository.findByUserName(userName);
+        return "orgId";
+    }
+
+    @Override
+    public OAuth2AccessToken enhance(OAuth2AccessToken oAuth2AccessToken, OAuth2Authentication oAuth2Authentication) {
+        Map<String, Object> additionalInfo = new HashMap<>();
+        String orgId = getOrgId(oAuth2Authentication.getName());
+        additionalInfo.put("organizationId", orgId);
+        // 모든 추가 속성은 `HashMap`에 추가하고 메서드에 전달된 accessToken 변수에 설정
+        ((DefaultOAuth2AccessToken) oAuth2AccessToken).setAdditionalInformation(additionalInfo);
+        return oAuth2AccessToken;
+    }
+}
+```
+
+> JWTTokenStoreConfig.java
+
+```java
+@Configuration
+public class JWTTokenStoreConfig {
+
+  // ~~
+
+  @Bean
+  public TokenEnhancer jwtTokenEnhancer() {
+    return new JWTTokenEnhancer();
+    /*return new JwtAccessTokenConverter();*/
+  }
+}
 ```
 
 
 
-### 요약
+#### 토근사용자정의필드파싱
+
+주울서버에 아래 항목을 구성
+
+> pom.xml
+
+```xml
+<!-- jsonwebtoken : JWT 파싱 -->
+<dependency>
+  <groupId>io.jsonwebtoken</groupId>
+  <artifactId>jjwt</artifactId>
+  <version>0.9.1</version>
+</dependency>
+```
+
+> TrackingFilter.java
+
+```java
+@Component
+public class TrackingFilter extends ZuulFilter{
+	
+  	// ...
+  
+    private String getOrganizationId() {
+        String result = "";
+        if(filterUtils.getAuthToken() != null) {
+            // HTTP `Authorization` 헤더에서 토큰을 파싱
+            String authToken = filterUtils.getAuthToken().replace("Bearer ", "");
+
+            try {
+                Claims claims = Jwts.parser()
+                        .setSigningKey(serviceConfig.getJwtSigningKey().getBytes("UTF-8"))
+                        .parseClaimsJws(authToken).getBody();
+                result = (String) claims.get("organizationId");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+}
+```
+
+
+
+## 요약
 
 ![image-20190531233551972](assets/image-20190531233551972.png)
+
+- 모든 서비스 통신에 HTTPS/SSL(Secure Socket Layer) 사용
+- 모든 서비스 호출은 API 게이트웨이를 통과
+- 공개 API와 비공개 API영역을 정함
+- 불필요한 네트워크 포트를 차단해 마이크로서비스의 공격범위를 제한
+
+
+
+> MSA 보안 요약
+
+- OAuth2는 사용자를 인증하는 토큰기반 인즈 프레임워크
+- OAuth2를 이용하면 사용자 요청을 처리하는 각 MSA를 호출할때 사용자 자격증명을 제공할 필요 없음
+- OAuth2는 그랜트라는 다양한 메커니즘을 제공하여 웹서비스 호출을 보호
+- OAuth2를 스프링에서 사용하려면 OAuth2 기반의 인증 서비스를 설정
+- 서비스를 호출하려는 모든 애플리케이션은 OAuth2 인증 서비스에 등록되어야함
+- 애플리케이션마다 고유 애플리케이션 이름과 시크릿 키가 있음
+- 사용자 자격증명과 역할은 메모리나 데이터 저장소에 있고 스프링 보안으로 접근
+- 각 서비스는 역할이 수행할 행위를 정의
+- 스프링 클라우드 시큐리티는 JWT 명세 지원
+- JWT는 OAuth2 토큰을 생성하기 위해 서명된 자바스크립트 표준을 정의
+- JWT를 사용하면 사용자 정의 필드를 명세에 삽입
+- MSA 보안은 OAuth2 사용 이상을 포함
+- HTTPS를 사용하여 서비스간 모든 호출을 암호화
+- 서비스게이트웨이를 사용하여 서비스에 접근 가능한 지점을 줄이자
+- 서비스가 실행되는 운영체제의 인바운드 및 아웃바운드 포트수를 제한해 서비스 공격지점을 제한
+
