@@ -284,6 +284,8 @@ public class ArticleApiControllerTest {
   - andDo(print())
 - `content(Object requestBody)`
   - body
+- `param(String key, String value)`
+  - query
 
 
 
