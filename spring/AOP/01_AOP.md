@@ -17,18 +17,21 @@
 
 ### #용어?
 
-- aspect
+![image-20190907133036157](assets/image-20190907133036157.png)
+
+- `Aspect`
   - AOP의 단위가 되는 횡단관심사
-- join point
+- `JoinPoint`
   - 횡단관심사가 실행되는 지점
-- advice
+- `Advice` ( inside JoinPoint ) 
   - 특정 조인포인트에서 실행되는 코드, 횡단관심사의 구현부
-- point cut
+  - What to do (할일들) 
+- `PointCut`
   - 어드바이스를 적용할 곳을 선별하기 위한 표현식, 조인포인트의 그룹
   - 표현식을 이용한 조인포인트 선택기능은 AspectJ가 제공
-- weaving
+- `Weaving`
   - 애플리케이션 코드의 적절한 지점에 애스팩트를 적용
-- target
+- ``
   - AOP 처리에 의해 처리 흐름에 변환이 생길 부분
 
 

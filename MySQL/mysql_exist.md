@@ -2,7 +2,10 @@
 
 > 참조페이지
 >
-> http://jason-heo.github.io/mysql/2014/05/28/mysql-in-vs-exists-vs-inner-join.html
+> http://jason-heo.github.io/mysql/2014/05/28/mysql-in-vs-exists-vs-inner-join.html (IN, EXISTS, INNER JOIN 성능비교) 
+> https://yahwang.github.io/posts/79 (SQL로 중복데이터 확인 및 삭제)
+
+
 
 ## Exists vs In
 
@@ -25,7 +28,7 @@ WHERE NOT EXISTS (
 
 
 
-## Exists vs In() vs Inner Join
+## Exists vs In vs Inner Join
 
 - Exists & In & Inner Join은 상호 변환이 가능하며 성능의 차이가 있습니다.
   - 예제 :: n번에 속한 고객의 주문 건수를 구하여라
@@ -67,8 +70,6 @@ WHERE EXISTS (
 - EXISTS & INNER JOIN 
   - 
 
-
-
 - NOT IN & NOT EXISTS & LEFT OUTER JOIN
   - 예제 :: 고객 ID가 존재하지 않는 케이스를 구하여라
   - 성능 :: Left Join > In > Exists
@@ -104,4 +105,88 @@ WHERE NOT EXISTS (
 ```
 
 
+
+## 중복데이터 삭제전략
+
+- 중복데이터를 삭제하기 위해서는 먼저 남길 데이터를 제외한 데이터를 구분할 컬럼의 값을 구해야
+
+![1568003534724](assets/1568003534724.png)
+
+### 중복데이터확인
+
+```sql
+SELECT first_name, last_name, email, COUNT(*) as cnt
+FROM contacts
+GROUP BY email, first_name, last_name
+HAVING COUNT(email) > 1 AND COUNT(first_name) > 1 AND COUNT(last_name) > 1;
+```
+
+
+
+### 중복데이터삭제(ROW_NUMBER)
+
+> - `WINDOW FUNCTION`을 지원하는 경우 `ROW_NUMBER `사용가능
+> - `PARTITION BY` 로 중복된 칼럼 지정하고 `ROW_NUM > 1`을 설정하여 삭제할 데이터만 가져옴
+
+```sql
+-- 확인
+SELECT *
+FROM (SELECT id, first_name, last_name, email, 
+      ROW_NUMBER() OVER(PARTITION BY first_name, last_name, email) as row_num
+      FROM contacts) a
+WHERE row_num > 1
+ORDER BY first_name;
+
+-- 삭제
+DELETE FROM contacts
+WHERE id IN (SELECT id 
+             FROM (SELECT id, ROW_NUMBER() OVER(PARTITION BY first_name, last_name, email) as row_num
+                   FROM contacts) a
+             WHERE row_num > 1);
+```
+
+
+
+### 중복데이터삭제(DISTINCT)
+
+```sql
+-- 확인
+SELECT *
+FROM contacts
+WHERE (first_name, last_name, email) IN ( SELECT DISTINCT first_name, last_name, email
+                                          FROM contacts
+                                          GROUP BY email, first_name, last_name
+                                          HAVING COUNT(email) > 1 AND COUNT(first_name) > 1 AND COUNT(last_name) > 1)
+ORDER BY first_name;
+
+-- 삭제
+SELECT a.*
+FROM contacts a
+JOIN (SELECT DISTINCT first_name, last_name, email
+      FROM contacts
+      GROUP BY email, first_name, last_name
+      HAVING COUNT(email) > 1 AND COUNT(first_name) > 1 AND COUNT(last_name) > 1) b
+ON a.first_name = b.first_name AND a.last_name = b.last_name AND a.email = b.email
+ORDER BY a.first_name;
+```
+
+
+
+### 중복데이터삭제(NOT IN)
+
+- MIN 함수를 활용하여 남길 데이터를 제외한 id를 NOT IN으로 처리
+- (MySQL은 DELETE 자체 데이터를 바로 사용 못하는 이유)
+
+```sql
+DELETE FROM contacts
+WHERE id NOT IN ( SELECT *
+                  FROM (SELECT MIN(id)
+                        FROM contacts
+                        WHERE (first_name,last_name,email) IN ( SELECT DISTINCT first_name, last_name, email
+                                                                FROM contacts
+                                                                GROUP BY email, first_name, last_name
+                                                                HAVING COUNT(email) > 1 AND COUNT(first_name) > 1 
+                                                                       AND COUNT(last_name) > 1)
+                        GROUP BY first_name, last_name, email) tmp);
+```
 

@@ -1,10 +1,12 @@
 \#spring #JPA #repository
 
+# JPA 활용
+
 >  DB에 접근하기 위해 Repository 인터페이스를 작성하고 이용하는 방법
 
 
 
-### #JPA표준 CRUD
+## JPA표준 CRUD
 
 - `스프링 데이터 JPA`에서 구현은 JPA로만 했을때와 차이가 없음
 - `스프링 데이터 JPA`를 사용하는 경우에도 Entity 상태를 항상 의식해야 합니다.
@@ -58,7 +60,7 @@ public class RoomServiceImpl implements RoomService {
 
 
 
-### #JPQL활용 데이터접근
+## JPQL활용
 
 - `스프링 데이터 JPA`를 사용하면 퀴리를 실행할때 메서드를 구현하는 것과 같이 코드로 구현하지 않아도됨
 - 쿼리를 애너테이션이나 메서드명 혹은 인수명의 형태로 선언적으로 기술
@@ -128,7 +130,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
 
 
-### #베타제어
+## 베타제어
 
 - JPA는 EntityManager에서 배타제어용 API제공
 - 베타 제어 여부를 Repository의 쿼리메서드에 `@Lock`을 지정해서 선언
@@ -152,7 +154,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer> {
 
 
 
-### #페이지처리
+## 페이지처리
 
 - 퀴리에 취득하는 데이터의 시작위치나 건수, 정렬조건을 지정해야하나 스프링 데이터 JPA에는 해당 쿼리에 자동으로 추가하는 기능을 제공
 - 이 기능을 사용하려면 사용중인 Repository가 `PagingAndSortingRepository`를 상속
@@ -220,7 +222,7 @@ public class WebMvcConfig extends WebMvcConfigurerAdapter {
 
 
 
-### #Repository_커스텀메서드
+## Repository 커스텀
 
 - 동적으로 쿼리내용을 변경하는 것과 같이 프로그램적인 처리가 필요한 경우
 - Repository 인터페이스의 쿼리메서드를 추가하는 것만으로 대응 불가
@@ -273,7 +275,7 @@ public interface RoomRepository extends JpaRepository<Room, Integer>, RoomReposi
 
 
 
-### #감사정보부여
+## 감사정보부여
 
 [참조] <https://tramyu.github.io/java/spring/jpa-auditing/>
 
@@ -414,3 +416,77 @@ public class SpringSecurityAuditorAware implements AuditorAware<User> {
 
 
 - [참고] 서비스인터페이스구성 <https://cheese10yun.github.io/spring-oop-04/>
+
+
+
+## 복합키 매핑
+
+> 복합키 = Composite Key
+
+### Embedded
+
+#### Key Class
+
+- getter / setter
+
+```java
+package com.mo.guard.model.embedded;
+
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import java.io.Serializable;
+
+@Embeddable
+@Data
+public class RelationAuthResourceId implements Serializable {
+
+    @Column(name = "auth_sq", insertable = false, updatable = false)
+    int authSequence;
+
+    @Column(name = "resource_sq", insertable = false, updatable = false)
+    int resourceSequence;
+
+    @Override
+    public String toString() {
+        return authSequence + "-" + resourceSequence;
+    }
+}
+```
+
+#### Entity Class
+
+```java
+@Entity
+@Table(name = "G_R_AUTH_RESOURCE_TB")
+@EntityListeners(value = {AuditingEntityListener.class})
+@Data
+public class RelationAuthResource {
+
+    @EmbeddedId
+    public RelationAuthResourceId pk;
+
+    @Column(name = "auth_sq", insertable = false, updatable = false)
+    public int authSequence;
+
+    @Column(name = "resource_sq", insertable = false, updatable = false)
+    public int resourceSequence;
+    
+}
+```
+
+
+
+### IdClass
+
+#### Key Class
+
+```
+
+```
+
+#### Entity Class
+
+```
+
+```
+

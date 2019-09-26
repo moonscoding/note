@@ -1,19 +1,40 @@
-\@#spring #JPA
+\#spring #JPA
 
 ## ORM & JPA
 
-- `ORM` ?
+> JPA를 왜 사용해야 할까?
+
+- Object와 RDB의 패러다임의 차이
+  - Object의 설계와 RDAB 설계가 다를 수 밖에 없음 ( RDB는 상속관계가 없음 )
+
+- 객체에서 자유롭게 작업할 수 있으나 DB라는 패러다임에 넣으려는 순간 다른 패러다임이기 때문에 작업량이 매우 증가
+  - 이전에는 모든 관계 데이터가 한 객체에 있는 슈퍼클래스를 만들어서 사용한 이유도 여기에 있음
+
+```
+객체 지향 답게 할 수록 매핑작업만 들어납니다.
+그래서 `객체를 자바 컬렉션에 저장하듯이 저장할 수 없을까?` 생각하게 되었습니다.
+
+결론적으로 JPA - Java Persistance API 
+```
+
+
+
+### ORM
 
 > Object Relational Mapping
 > 관계형 DB에 데이터를 읽고 쓰는 처리를 객체에 데이터를 읽고 쓰는 방식으로 구현하는 기술
 
-- `JPA` ?
+
+
+### JPA
 
 > Java Persistence API
 > 자바 표준 ORM
 > JDBC에서 사용하던 SQL을 없애며, DB칼럼과 자바객체와의 매핑이 가능
 
-- JDBC vs JPA
+
+
+### JDBC vs JPA
 
 ```java
 public Room getRoomById(String roomId) {
@@ -34,7 +55,7 @@ public Room getRoomById(String roomId) {
 
 
 
-### #Entity
+## Entity
 
 - DB에서 영속적으로 저장된 데이터를 자바객체로 매핑
 - 메모리상에 자바객체의 인스턴스 형태로 존재
@@ -78,12 +99,12 @@ public class Room implements Serializable {
 
 
 
-### #EntityManager
+## EntityManager
 
 - DB와 동기화 담당
-- 영속성 컨텍스트 ( Persistence Context )라는 Entity를 관리하기 위한 영역
-- DB의 데이터 접근시에 반드시 EntityManager를 통해 영속성 컨텍스트의 Entity를 취득하거나 새로운 것을 등록해야 합니다. 
-- EntityManager가 Entity변경을 추적하 수 있어 적절한 타이밍에 DB 동기화
+- `영속성 컨텍스트 ( Persistence Context )`라는 Entity를 관리하기 위한 영역
+- DB의 데이터 접근시에 반드시 EntityManager를 통해 영속성 컨텍스트의 Entity를 취득하거나 새로운 것을 등록
+- EntityManager가 Entity 변경을 추적하 수 있어 적절한 타이밍에 DB 동기화
 
 ![1554956457719](1554956457719.png)
 
@@ -91,7 +112,7 @@ public class Room implements Serializable {
 
 `영속성 컨텍스트`란 ?
 
-> 내부의 캐시를 가지고 있으며 영속상태의 `엔티티`가 이곳에 저장됩니다.
+> 내부의 캐시를 가지고 있으며 영속상태의 `Entity`가 이곳에 저장됩니다.
 > 결국 내부적인 캐시관리가 되기 때문에 쓰기지연이 발생할 수 있지만, 성능향상에는 유리합니다. 
 
 - 과정
@@ -104,7 +125,7 @@ public class Room implements Serializable {
 
 
 
-### #API
+## NativeAPI
 
 - `find`
   - T find(java.lang.Class entityClass, java.lang.Object primary Key)
@@ -147,7 +168,7 @@ public class Room implements Serializable {
 
 
 
-### #Entity상태
+## Entity상태
 
 - `new 상태`
   - 새로운 Entity 인스턴스 생성, 영속성 컨텍스트에 등록되지 않은 상태
@@ -164,21 +185,36 @@ public class Room implements Serializable {
 
 ![1554956436635](1554956436635.png)
 
-### #연관관계
+
+
+## 연관관계
 
 - RDBMS에서 연관된 테이블 간의 관계를 정의
-- 종류
-  - 단방향 일대일
-  - 양방향 일대일
-  - 단방향 일대다
-  - 단방향 다대일
-  - 양방향 일대다/다대일
-  - 단방향 다대다
-  - 양방향 다대다
 
-> 다대일
+- JPA에서는 데이터베이스의 연관관계를 Entity 간의 참조 관계로 매핑
+- 이 같은 연관관계가 제대로 매핑되게 하려면 `EntityManager가 각 Entity 간의 관계를 사전에 제대로 인식`할 필요가 있음
+  이를 위해 연관관계를 명시적으로 정의하기 위한 몇 가지 기법이 준비되어 있음
+
+
+
+>  종류
+
+[참조] https://siyoon210.tistory.com/27
+
+- 단방향 일대일
+- 양방향 일대일
+- 단방향 일대다
+- 단방향 다대일
+- 양방향 일대다/다대일
+- 단방향 다대다
+- 양방향 다대다
+
+
+
+### ManyToOne(다대일)
 
 - `@ManyToOne`
+- 장비(다) - 방(일)
 
 ```java
 @Entity
@@ -206,11 +242,13 @@ public class Equipment implements Serializable {
 }
 ```
 
-> 일대다
+
+
+### OneToMany(일대다)
 
 - `@OneToMany`	
-  - mappedBy - 관계를 맺고 있는 프로퍼티명
-  - cascade - 자신에 대한 조작 관련 Entity에 전파
+  - `mappedBy ` - 관계를 맺고 있는 프로퍼티명
+  - `cascade`  - 자신에 대한 조작 관련 Entity에 전파
 
 ```java
 @Entity
@@ -234,6 +272,20 @@ public class Room implements Serializable {
 }
 ```
 
+
+
+### ManyToMany(다대다)
+
+>  관계테이블의 엔티티를 만들어야 하는 것은 아님
+
+```java
+@JoinTable...
+```
+
+
+
+
+
 > 연관관계 Entity 조회하기
 
 ```java
@@ -253,6 +305,8 @@ public Room getRoomOfEquipment(Integer equipmentId) {
 }
 ```
 
+
+
 > 패치방법
 
 ```java
@@ -265,7 +319,7 @@ private List<Equipment> equipment;
 
 
 
-### #JPQL
+## JPQL
 
 - `Java Persistence Query Language`
   - JPA 는기본키를 지정해 DB를 조작하는 방법외에 기본키를 사용하지 않는 처리 방법을 제공
@@ -308,11 +362,9 @@ public List<Room> getRoomsByName(String roomName) {
 
 
 
-### #CRUD
+## CRUD
 
-
-
-#### #JPA 활용
+### JPA 활용
 
 ```java
 @Service
@@ -356,7 +408,7 @@ public class RoomServiceImpl implements RoomService {
 
 
 
-#### #JPQL 활용
+### JPQL 활용
 
 > Read ( .getResultList() )
 
@@ -400,7 +452,7 @@ public class RoomServiceImpl implements RoomService {
 
 
 
-### #베타제어
+## 베타제어
 
 - <언제 왜 사용하는지>
   - 웹어플리케이션은 동시에 여러 트랜잭션이 실행되는 것이 일반적이기 때문에 갱신처리에 배타제어를 고려해야 합니다.
@@ -410,7 +462,9 @@ public class RoomServiceImpl implements RoomService {
   - 낙관적 잠금 (optimistic lock)
   - 비관적 잠금 (pessimistic locl)
 
-#### #낙관적잠금
+
+
+### 낙관적잠금
 
 - `@Version` 
   - Entity가 서로 구분되도록 반드시 버저닝 처리
@@ -458,7 +512,9 @@ public class RoomServiceImpl implements RoomService {
 }
 ```
 
-#### #비관적잠금
+
+
+### 비관적잠금
 
 - 비관적 잠금 활성화
   - `EntityManager.find()`나 `EntityManager.createQuery()` 비관적 잠금을 확보
@@ -507,14 +563,16 @@ public class RoomServiceImpl implements RoomService {
 
 
 
-### #Inheritance
+## Inheritance
 
 - 관계매핑의 3가지 방법
   - `조인전략`  : 각각의 테이블로 만들어 조회할 때 조인을 사용
   - `단일 테이블 전략` : 테이블을 하나만 사용해서 통합
   - `구현클래스마다 테이블 전략` : 서브타입마다 하나의 테이블을 생성
 
-#### #조인전략
+
+
+### 조인전략
 
 - `@Inheritance(strategy = InheritanceType.JOINED)`
   - 상속매핑은 부모 클래스에 Inheritance를 사용
@@ -564,5 +622,8 @@ public class Movie extends Item {
 }
 ```
 
-#### #단일테이블전략
 
+
+### 단일테이블전략
+
+ㄴ

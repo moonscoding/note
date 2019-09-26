@@ -1,11 +1,13 @@
 \#spring #REST #setting
 
-## #Manuel
+## Manuel
 
-### #@RestController
+### @RestController
 
 - 요청데이터와 응답데이터는 `HttpMessageConmverter`를 통해 가져오고, 반환합니다.
 - 입력값 검사에 대한 오류 처리는 예외 핸들러에서 공통으로 수행합니다. 
+
+
 
 > 선언형처리 vs 프로그래밍형처리
 
@@ -36,9 +38,9 @@ public class BookRestController() {
 
 
 
-### #API
+### API
 
-#### #Resource
+#### Resource
 
 - `JSON 필드명과 자바빈즈 프로퍼티명을 똑같이 맞춰야 합니다.`
 
@@ -65,7 +67,7 @@ public class BookResource implements Serializable {
 
 
 
-#### #ResourceCRUD
+#### CRUD
 
 - `GET`
   - `요청` curl http://llocalhost:8080/books/9791158390747
@@ -109,7 +111,7 @@ public ResponseEntity〈Void〉createBook(@Validated @RequestBody BookResource n
     String resourceUri = "http://localhost:8080/books/" + createdBook.getBookid();
     return ResponseEntity.created(URI.create(resourceUri)).build();
 }
-p
+
 @RequestMapping(path = "{bookld}", method=RequestMethod.PUT)
 @ResponseStatus(HttpStatus.NO_CONTENT)
 public void put(@PathVariable String bookid, @Validated @RequestBody BookResource resource) {
@@ -129,7 +131,7 @@ public void delete(@PathVariable String bookid) {
 
 
 
-#### #Resource검색
+#### Resource검색
 
 - ID를 대신해서 검색 조건을 요청으로 전송 서버 측에서는 해당 조건을 받아서 처리하는 방식
 
@@ -186,7 +188,7 @@ return bookRepository
 
 
 
-### #CORS
+### CORS
 
 - `CORS ` (Cross-Origin Resource Sharing)
   - AJAX(XMLHttpRequest)를 사용할 때 다른 도메인의 서버리소스에 접근하기 위한 메커니즘
@@ -238,7 +240,7 @@ public class BooksRestController {
 
 
 
-#### #CORS옵션
+#### CORS옵션
 
 
 - `allowedOrigins`
@@ -267,12 +269,12 @@ public class BooksRestController {
 
 
 
-#### #URI조립
+#### URI조립
 
 - 스프링은 URI를 생성하는 `UriComponentsBuilder` 컴포넌트 제공
 - 스프링 MVC에서 핸들러 메서드의 정의 정보와 연동하여 URI를 생성하는 `MvcUriComponentsBuilder` 컴포넌트 제공
 
-##### #UriComponentsBuilder
+##### UriComponentsBuilder
 
 - 프로토콜, 호스트명, 포트번호, 컨텍스트 경로와 같이 환경에 의존하는 부분의 은폐
 - URI 템플릿을 사용한 URI 조립
@@ -297,7 +299,7 @@ public ResponseEntity<Void> createBook(
 }
 ```
 
-##### #MvcUriComponentBuilder
+##### MvcUriComponentBuilder
 
 - `MvcUriComponentBuilder`를 이용하면 핸들러 메서드의 정의정보(요청 매핑이나 메서드 매개변수 정보)와 연동하여 URI를 조립할 수 있어 조금 더 유연합니다.
   - 작성할 URI의 템플릿을 의식할 필요가 없음

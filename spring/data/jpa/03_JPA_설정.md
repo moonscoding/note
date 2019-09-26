@@ -1,6 +1,6 @@
 \#spring #JPA #setting
 
-
+# JPA 설정
 
 ### #MavenDependency
 

@@ -751,7 +751,7 @@ public class JWTTokenStoreConfig {
 
 
 
-#### 토근사용자정의필드파싱
+#### 토근 사용자정의필드 파싱
 
 주울서버에 아래 항목을 구성
 
