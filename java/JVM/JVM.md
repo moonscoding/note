@@ -126,16 +126,23 @@ A(Bootstrap ClassLoader)-->B(ExtensionClassLoader)
 
 ```mermaid
 graph LR
-	A(로딩 - Loading) --> C
-	subgraph Linking
-	C(검증 - Verifying) --> D(준비 - Preparing)
-	D --> E(분석 - Resolving)
+    A(로딩 - Loading) --> G(링크 - Linking)
+	G --> F(초기화 - Initialization)
+	
+	subgraph 로딩 - Loading
+	Bootstrap --> Extension
+	Extension --> Application
 	end
-	E --> F(초기화 - Initializing)
+	
+    subgraph 링크 - Linking
+	C(검증 - Verify) --> D(준비 - Prepare)
+	D --> E(분석 - Resolve)
+	end
 ```
 
 - `로드` 
-  - 클래스를 파일에서 가져와서 JVM 메모리에 로드
+  - 클래스를 파일에서 가져와서 적절한 바이너리 데이터를 만들고 JVM 메모리(메소드 영역)에 로드
+  - 이  때 메소드 영역에 저장되는 데이터 (FQCN, 클래스, 인터페이스, 이넘, 메소드와 변수)
 - `검증`
   - 읽어 들인 클래스가 자바 언어 명세 및 JVM 명세에 명시된 대로 잘 구성되어 있는지 검사
   - 클래스 로드의 전 과정 중에서 가장 까다로운 검사를 수행하는 과정으로 가장 복잡하고 시간이 많이 걸림
@@ -144,7 +151,7 @@ graph LR
   - 클래스가 필요로 하는 메모리를 할당
   - 클래스에서 정의된 필드, 메서드, 인터페이스들을 나타내는 데이터 구조로 준비
 - `분석`
-  - 클래스의 상수 풀 내 모든 심볼릭 레퍼런스를 다이렉스 레퍼런스로 변경
+  - 클래스의 상수 풀 내 모든 심볼릭 레퍼런스를 실제 레퍼런스로 변경
 - `초기화`
   - 클래스 변수들을 적절한 값으로 초기화 
   - 즉, static initializer 들을 수행하고, static 필드들을 설정된 값으로 초기화
@@ -162,13 +169,13 @@ graph LR
 > 런타임 데이터 영역
 
 - `스레드당 하나씩 생성`
-  - 이중 PC 레지스터(PC Register)
-  - JVM 스택 영역(JVM Stack Area)
-  - 네이티브 메서드 스택 영역(Native Method Stack Area)
+  - `이중 PC 레지스터(PC Register)`
+  - `JVM 스택 영역(JVM Stack Area)`
+  - `네이티브 메서드 스택 영역(Native Method Stack Area)`
 - `모든 스레드 공유`
-  - 힙 영역(Heap Area)
-  - 메서드 영역(Method Area)
-    - 런타임 상수 풀(Runtime Constant Pool)
+  - `힙 영역(Heap Area)`
+  - `메서드 영역(Method Area)`
+    - `런타임 상수 풀(Runtime Constant Pool)`
 
 
 
@@ -206,11 +213,11 @@ graph LR
   - 메서드 영역은 JVM 벤더마다 다양한 형태로 구현할 수있으며, 
     오라클 핫스팟 JVM에서는 흔히 Permanet Area 혹은 Permanent Generation이라고 부름
   - 메서드 영역에 대한 가비지 컬렉션은 JVM 벤더의 선택 사항
-- `런타임 상수 풀`
-  - 클래스 파일 포맷에서 constant_pool 테이블에 해당하는 영역
-  - 메서드 영역에 포함되는 영역이긴 하지만 JVM 동작에서 가장 핵심적인 역할을 수행하는 곳이기 때문에 JVM 명세에서 따로 중요하게 기술
-  - 각 클래스와 인터페이스의 상수뿐 아니라, 메서드와 필드에 대한 모든 레퍼런스까지 담고 있는 테이블
-  - 즉, 어떤 메서드나 필드를 참조할 때 JVM은 런타임 상수 풀을 통해 해당 메서드나 필드의 실제 메모리상 주소를 찾아서 참조
+  - `런타임 상수 풀`
+    - 클래스 파일 포맷에서 constant_pool 테이블에 해당하는 영역
+    - 메서드 영역에 포함되는 영역이긴 하지만 JVM 동작에서 가장 핵심적인 역할을 수행하는 곳이기 때문에 JVM 명세에서 따로 중요하게 기술
+    - 각 클래스와 인터페이스의 상수뿐 아니라, 메서드와 필드에 대한 모든 레퍼런스까지 담고 있는 테이블
+    - 즉, 어떤 메서드나 필드를 참조할 때 JVM은 런타임 상수 풀을 통해 해당 메서드나 필드의 실제 메모리상 주소를 찾아서 참조
 - `힙`
   - 인스턴스 또는 객체를 저장하는 공간으로 가비지 컬렉션의 대상
   - JVM 성능등의 이슈에서 가장 많이 언급되는 공간
@@ -303,7 +310,7 @@ IBM JVM은 JIT 컴파일러뿐만 아니라 IBM JDK 6부터 AOP(Ahead-Of-Time) �
 
 ## 자바 바이트코드
 
-WORA를 구현하기 위해 JVM은 사용자 언어인 자바와 기계어 사이의 중간 언어인 자바 바이트 코드를 사용
+WORA(Write Once Run Anywhere!)를 구현하기 위해 JVM은 사용자 언어인 자바와 기계어 사이의 중간 언어인 자바 바이트 코드를 사용
 
 이 자바 바이크 코드가 자바 코드를 배포하는 가장 작은 단위
 
@@ -316,3 +323,5 @@ WORA를 구현하기 위해 JVM은 사용자 언어인 자바와 기계어 사�
 ### 참고
 
 https://d2.naver.com/helloworld/1230
+
+https://www.inflearn.com/course/the-java-code-manipulation
